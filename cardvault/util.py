@@ -15,6 +15,7 @@ gi.require_version('Gtk', '3.0')
 imagecache = {}
 manaicons = {}
 set_list = []
+set_dict = {}
 
 # Card library object
 library = {}
@@ -139,6 +140,7 @@ def load_sets():
     # Sort the loaded sets based on the sets name
     for set in sorted(sets, key=lambda x: x.name):
         set_list.append(set)
+        set_dict[set.code] = set
 
 
 def reload_image_cache():

@@ -9,21 +9,10 @@
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <child>
-          <object class="GtkImage" id="bigCard">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="pixbuf">../resources/images/dummy_315x450.png</property>
-          </object>
-          <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">0</property>
-          </packing>
-        </child>
-        <child>
           <object class="GtkGrid">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="column_homogeneous">True</property>
+            <property name="halign">start</property>
             <child>
               <object class="GtkLabel">
                 <property name="visible">True</property>
@@ -183,6 +172,8 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Loading...</property>
+                <property name="wrap">True</property>
+                <property name="max_width_chars">50</property>
                 <property name="xalign">0.10000000149011612</property>
               </object>
               <packing>
@@ -231,6 +222,19 @@
           </object>
           <packing>
             <property name="left_attach">1</property>
+            <property name="top_attach">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkOverlay" id="imageContainer">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
             <property name="top_attach">0</property>
           </packing>
         </child>

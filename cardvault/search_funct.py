@@ -96,6 +96,7 @@ def _get_filters(app):
     output["type"] = _get_combo_value(combo)
     # Set
     name = app.ui.get_object("setEntry").get_text()
+    output["set"] = ""
     for set in util.set_list:
         if set.name == name:
             output["set"] = set.code

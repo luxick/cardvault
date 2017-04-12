@@ -14,7 +14,6 @@ class MainWindow:
         self.ui.add_from_file("gui/mainwindow.glade")
         self.ui.add_from_file("gui/overlays.glade")
         self.ui.add_from_file("gui/search.glade")
-        self.ui.add_from_file("gui/detailswindow.glade")
         window = self.ui.get_object("mainWindow")
         self.current_page = None
         util.app = self
@@ -53,8 +52,41 @@ class MainWindow:
         status_bar.push(0, msg)
 
     def show_card_details(self, card):
-        print("Show", card.name)
-        pass
+        builder = Gtk.Builder()
+        builder.add_from_file("gui/detailswindow.glade")
+        builder.add_from_file("gui/overlays.glade")
+        window = builder.get_object("cardDetails")
+        window.set_title(card.name)
+        # Card Image
+        container = builder.get_object("imageContainer")
+        pixbuf = util.load_card_image(card, 63 * 5, 88 * 5)
+        image = Gtk.Image().new_from_pixbuf(pixbuf)
+        container.add(image)
+
+
+        # Name
+        builder.get_object("cardName").set_text(card.name)
+        # Types
+        supertypes = ""
+        if card.subtypes is not None:
+            supertypes = " - " + " ".join(card.subtypes)
+        types = " ".join(card.types) + supertypes
+        builder.get_object("cardTypes").set_text(types)
+        # Rarity
+        builder.get_object("cardRarity").set_text(card.rarity if card.rarity else "")
+        # Release
+        builder.get_object("cardReleaseDate").set_text(card.release_date if card.release_date else "")
+        # Set
+        builder.get_object("cardSet").set_text(card.set_name)
+        # Printings
+        prints = []
+        for set in card.printings:
+            prints.append(util.set_dict[set].name)
+
+        builder.get_object("cardPrintings").set_text(", ".join(prints))
+        # Legalities
+        #builder.get_object("cardLegalities").set_text(", ".join(card.legalities))
+        window.show_all()
 
 
 win = MainWindow()
