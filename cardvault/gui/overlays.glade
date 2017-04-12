@@ -73,6 +73,7 @@
   <object class="GtkGrid" id="searchOverlay">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
+    <property name="no_show_all">True</property>
     <property name="halign">center</property>
     <property name="valign">center</property>
     <property name="row_spacing">10</property>
@@ -81,6 +82,7 @@
       <object class="GtkImage">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="no_show_all">True</property>
         <property name="valign">end</property>
         <property name="pixel_size">100</property>
         <property name="icon_name">edit-find-symbolic</property>
@@ -94,6 +96,7 @@
       <object class="GtkLabel">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="no_show_all">True</property>
         <property name="valign">center</property>
         <property name="label" translatable="yes">Search</property>
         <attributes>
@@ -110,6 +113,7 @@
       <object class="GtkLabel">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="no_show_all">True</property>
         <property name="valign">start</property>
         <property name="label" translatable="yes">Use the entry on the left to search for cards</property>
       </object>

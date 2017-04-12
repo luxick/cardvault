@@ -26,6 +26,12 @@ status_bar = None
 app = None
 unsaved_changes = False
 
+legality_colors ={
+    "Banned": "#C65642",
+    "Restricted": "#D39F30",
+    "Legal": "#62B62F"
+}
+
 rarity_dict = {
     "special": 0,
     "common": 1,

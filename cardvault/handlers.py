@@ -26,7 +26,7 @@ class Handlers:
             container = self.app.ui.get_object("contentPage")
             new_page = self.app.pages[item.get_name()]
             if self.app.current_page:
-               container.remove(self.app.current_page)
+                container.remove(self.app.current_page)
             self.app.current_page = new_page
             container.pack_start(self.app.current_page, True, True, 0)
             container.show_all()

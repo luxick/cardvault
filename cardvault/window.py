@@ -2,8 +2,9 @@ import config
 import handlers
 import util
 import search_funct
+import re
 import gi
-from gi.repository import Gtk
+from gi.repository import Gtk, Pango
 gi.require_version('Gtk', '3.0')
 
 
@@ -62,8 +63,6 @@ class MainWindow:
         pixbuf = util.load_card_image(card, 63 * 5, 88 * 5)
         image = Gtk.Image().new_from_pixbuf(pixbuf)
         container.add(image)
-
-
         # Name
         builder.get_object("cardName").set_text(card.name)
         # Types
@@ -82,11 +81,57 @@ class MainWindow:
         prints = []
         for set in card.printings:
             prints.append(util.set_dict[set].name)
-
         builder.get_object("cardPrintings").set_text(", ".join(prints))
         # Legalities
-        #builder.get_object("cardLegalities").set_text(", ".join(card.legalities))
+        grid = builder.get_object("legalitiesGrid")
+        rows = 1
+        for legality in card.legalities:
+            date_label = Gtk.Label()
+            date_label.set_halign(Gtk.Align.END)
+            text_label = Gtk.Label()
+            text_label.set_line_wrap_mode(Pango.WrapMode.WORD)
+            text_label.set_line_wrap(True)
+            text_label.set_halign(Gtk.Align.END)
+            color = util.legality_colors[legality["legality"]]
+            date_label.set_markup("<span fgcolor=\""+color+"\">" + legality["format"] + ":" + "</span>")
+            text_label.set_markup("<span fgcolor=\""+color+"\">" + legality["legality"] + "</span>")
+            grid.attach(date_label, 0, rows + 2, 1, 1)
+            grid.attach(text_label, 1, rows + 2, 1, 1)
+
+            rows += 1
+        grid.show_all()
+
+        # Rulings
+        if card.rulings:
+            grid = builder.get_object("rulesGrid")
+            rows = 1
+            for rule in card.rulings:
+                date_label = Gtk.Label(rule["date"])
+                text_label = Gtk.Label(rule["text"])
+                text_label.set_line_wrap_mode(Pango.WrapMode.WORD)
+                text_label.set_line_wrap(True)
+                text_label.set_justify(Gtk.Justification.LEFT)
+                text_label.set_halign(Gtk.Align.START)
+
+                grid.attach(date_label, 0, rows+2, 1, 1)
+                grid.attach(text_label, 1, rows+2, 1, 1)
+
+                rows += 1
+            grid.show_all()
+        else:
+            builder.get_object("ruleBox").set_visible(False)
+
         window.show_all()
+
+
+        def eval_key_pressed(widget,event):
+            key, modifier = Gtk.accelerator_parse('Escape')
+            keyval = event.keyval
+            if keyval == key:
+                window.destroy()
+
+        window.connect("key-press-event", eval_key_pressed)
+
 
 
 win = MainWindow()

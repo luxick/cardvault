@@ -4,20 +4,28 @@
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkWindow" id="cardDetails">
     <property name="can_focus">False</property>
+    <property name="default_width">600</property>
     <child>
       <object class="GtkGrid">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="hexpand">False</property>
+        <property name="vexpand">False</property>
+        <property name="row_spacing">5</property>
+        <property name="column_spacing">5</property>
         <child>
           <object class="GtkGrid">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="halign">start</property>
+            <property name="row_spacing">10</property>
+            <property name="column_spacing">5</property>
             <child>
               <object class="GtkLabel">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">end</property>
+                <property name="valign">start</property>
                 <property name="margin_right">2</property>
                 <property name="label" translatable="yes">Card Name:</property>
                 <property name="justify">right</property>
@@ -32,6 +40,7 @@
               <object class="GtkLabel" id="cardName">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="halign">start</property>
                 <property name="label" translatable="yes">Loading...</property>
                 <property name="xalign">0.10000000149011612</property>
                 <attributes>
@@ -49,6 +58,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">end</property>
+                <property name="valign">start</property>
                 <property name="margin_right">2</property>
                 <property name="label" translatable="yes">Type:</property>
                 <property name="justify">right</property>
@@ -63,6 +73,7 @@
               <object class="GtkLabel" id="cardTypes">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="halign">start</property>
                 <property name="label" translatable="yes">Loading...</property>
                 <property name="xalign">0.10000000149011612</property>
               </object>
@@ -76,6 +87,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">end</property>
+                <property name="valign">start</property>
                 <property name="margin_right">2</property>
                 <property name="label" translatable="yes">Rarity:</property>
                 <property name="justify">right</property>
@@ -90,6 +102,7 @@
               <object class="GtkLabel" id="cardRarity">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="halign">start</property>
                 <property name="label" translatable="yes">Loading...</property>
                 <property name="xalign">0.10000000149011612</property>
               </object>
@@ -103,6 +116,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">end</property>
+                <property name="valign">start</property>
                 <property name="margin_right">2</property>
                 <property name="label" translatable="yes">Release:</property>
                 <property name="justify">right</property>
@@ -117,6 +131,7 @@
               <object class="GtkLabel" id="cardReleaseDate">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="halign">start</property>
                 <property name="label" translatable="yes">Loading...</property>
                 <property name="xalign">0.10000000149011612</property>
               </object>
@@ -130,6 +145,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">end</property>
+                <property name="valign">start</property>
                 <property name="margin_right">2</property>
                 <property name="label" translatable="yes">Edition:</property>
                 <property name="justify">right</property>
@@ -144,6 +160,7 @@
               <object class="GtkLabel" id="cardSet">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="halign">start</property>
                 <property name="label" translatable="yes">Loading...</property>
                 <property name="xalign">0.10000000149011612</property>
               </object>
@@ -157,6 +174,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">end</property>
+                <property name="valign">start</property>
                 <property name="margin_right">2</property>
                 <property name="label" translatable="yes">Other Printings:</property>
                 <property name="justify">right</property>
@@ -171,6 +189,7 @@
               <object class="GtkLabel" id="cardPrintings">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="halign">start</property>
                 <property name="label" translatable="yes">Loading...</property>
                 <property name="wrap">True</property>
                 <property name="max_width_chars">50</property>
@@ -182,11 +201,28 @@
               </packing>
             </child>
             <child>
+              <object class="GtkGrid" id="legalitiesGrid">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="halign">start</property>
+                <property name="row_spacing">2</property>
+                <property name="column_spacing">2</property>
+                <child>
+                  <placeholder/>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">6</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkLabel">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="halign">end</property>
-                <property name="label" translatable="yes">Legalities:</property>
+                <property name="valign">start</property>
+                <property name="label" translatable="yes">Legality:</property>
                 <property name="justify">right</property>
                 <property name="xalign">0.89999997615814209</property>
               </object>
@@ -195,33 +231,9 @@
                 <property name="top_attach">6</property>
               </packing>
             </child>
-            <child>
-              <object class="GtkLabel" id="cardLegalities">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">Loading...</property>
-                <property name="xalign">0.10000000149011612</property>
-              </object>
-              <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">6</property>
-              </packing>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
           </object>
           <packing>
-            <property name="left_attach">1</property>
+            <property name="left_attach">2</property>
             <property name="top_attach">0</property>
           </packing>
         </child>
@@ -239,14 +251,92 @@
           </packing>
         </child>
         <child>
-          <placeholder/>
+          <object class="GtkSeparator">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="halign">center</property>
+            <property name="orientation">vertical</property>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">0</property>
+          </packing>
         </child>
         <child>
-          <placeholder/>
+          <object class="GtkBox" id="ruleBox">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="no_show_all">True</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Rulings</property>
+                <attributes>
+                  <attribute name="scale" value="1.2"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScrolledWindow">
+                <property name="height_request">200</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
+                <property name="vexpand">True</property>
+                <property name="shadow_type">in</property>
+                <child>
+                  <object class="GtkViewport">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="hexpand">True</property>
+                    <property name="vexpand">True</property>
+                    <child>
+                      <object class="GtkGrid" id="rulesGrid">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="row_spacing">10</property>
+                        <property name="column_spacing">20</property>
+                        <child>
+                          <object class="GtkSeparator">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="valign">start</property>
+                            <property name="orientation">vertical</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">0</property>
+                            <property name="width">2</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">1</property>
+            <property name="width">3</property>
+          </packing>
         </child>
       </object>
     </child>
-    <child>
+    <child type="titlebar">
       <placeholder/>
     </child>
   </object>
