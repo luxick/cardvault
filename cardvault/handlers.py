@@ -1,8 +1,7 @@
 import gi
 import config
-import util
+import lib_funct
 import search_funct
-from mtgsdk import Card
 from gi.repository import Gtk
 gi.require_version('Gtk', '3.0')
 
@@ -30,6 +29,7 @@ class Handlers:
             self.app.current_page = new_page
             container.pack_start(self.app.current_page, True, True, 0)
             container.show_all()
+            self.app.current_page.emit('show')
 
             app_title = new_page.get_name() + " - " + config.application_title
             self.app.ui.get_object("mainWindow").set_title(app_title)
@@ -45,15 +45,36 @@ class Handlers:
     def do_add_remove_clicked(self, button):
         pass
 
+    #----------------Library-----------------
+
+    def do_reload_library(self, view):
+        lib_funct.reload_library(self.app)
+
+    def do_tag_entry_changed(self, entry):
+        input_valid = entry.get_text() and entry.get_text() != ""
+        self.app.ui.get_object("newTagButton").set_sensitive(input_valid)
+
+    def do_new_tag_clicked(self, entry):
+        lib_funct.add_new_tag(entry.get_text(), self.app)
+        entry.set_text("")
+
     # Handlers for TreeViews etc. wich have been not added by Glade
 
     def on_search_card_selected(self, tree, row_no, column):
         (model, path_list) = tree.get_selection().get_selected_rows()
-
         for path in path_list:
             tree_iter = model.get_iter(path)
             card_id = model.get_value(tree_iter, 0)
             card_list = self.app.ui.get_object("searchResults").get_child()
+            card = card_list.lib[card_id]
+            self.app.show_card_details(card)
+
+    def on_library_card_selected(self, tree, row_no, column):
+        (model, path_list) = tree.get_selection().get_selected_rows()
+        for path in path_list:
+            tree_iter = model.get_iter(path)
+            card_id = model.get_value(tree_iter, 0)
+            card_list = self.app.ui.get_object("libraryContainer").get_child()
             card = card_list.lib[card_id]
             self.app.show_card_details(card)
 

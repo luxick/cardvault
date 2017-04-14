@@ -2,7 +2,7 @@ import config
 import handlers
 import util
 import search_funct
-import re
+import lib_funct
 import gi
 from gi.repository import Gtk, Pango
 gi.require_version('Gtk', '3.0')
@@ -10,11 +10,11 @@ gi.require_version('Gtk', '3.0')
 
 class MainWindow:
     def __init__(self):
-
         self.ui = Gtk.Builder()
         self.ui.add_from_file("gui/mainwindow.glade")
         self.ui.add_from_file("gui/overlays.glade")
         self.ui.add_from_file("gui/search.glade")
+        self.ui.add_from_file("gui/library.glade")
         window = self.ui.get_object("mainWindow")
         self.current_page = None
         util.app = self
@@ -22,7 +22,7 @@ class MainWindow:
 
         self.pages = {
             "search": self.ui.get_object("searchView"),
-            "library": not_found,
+            "library": self.ui.get_object("libraryView"),
             "decks": not_found
         }
 
@@ -38,6 +38,8 @@ class MainWindow:
         self.ui.connect_signals(self.handlers)
 
         search_funct.init_search_view(self)
+
+        lib_funct.init_library_view(self)
 
         window.connect('delete-event', Gtk.main_quit)
         window.show_all()
@@ -85,7 +87,7 @@ class MainWindow:
         # Legalities
         grid = builder.get_object("legalitiesGrid")
         rows = 1
-        for legality in card.legalities:
+        for legality in card.legalities if card.legalities else {}:
             date_label = Gtk.Label()
             date_label.set_halign(Gtk.Align.END)
             text_label = Gtk.Label()

@@ -21,7 +21,11 @@ def init_search_view(app):
     # Fill type box
     _init_combo_box(app.ui.get_object("typeCombo"), util.card_types)
     # Create Model for search results
-    _init_results_tree(app.ui.get_object("cardTree"), app)
+    _init_results_tree(app)
+
+
+def reload_serach_view(app):
+    pass
 
 
 def search_cards(term):
@@ -56,9 +60,9 @@ def search_cards(term):
     return lib
 
 
-def _init_results_tree(tree_view, app):
+def _init_results_tree(app):
     overlay = app.ui.get_object("searchResults")
-    card_list = cardlist.CardList(tree_view, False)
+    card_list = cardlist.CardList(False)
     card_list.set_name("resultsScroller")
     card_list.list.connect("row-activated", app.handlers.on_search_card_selected)
     overlay.add(card_list)

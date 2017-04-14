@@ -6,15 +6,13 @@ from gi.repository import Gtk, GdkPixbuf, GObject
 
 
 class CardList(Gtk.ScrolledWindow):
-    def __init__(self, tree, with_filter):
+    def __init__(self, with_filter):
         Gtk.ScrolledWindow.__init__(self)
         self.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         self.set_hexpand(True)
         self.set_vexpand(True)
 
         self.filtered = with_filter
-        self.list = tree
-
         self.lib = {}
 
         # Columns are these:
@@ -42,6 +40,7 @@ class CardList(Gtk.ScrolledWindow):
 
         self.list.set_rules_hint(True)
         self.selection = self.list.get_selection()
+        self.selection.set_mode(Gtk.SelectionMode.MULTIPLE)
 
         bold_renderer = Gtk.CellRendererText(xalign=0.5, yalign=0.5)
         bold_renderer.set_property("weight", 800)
