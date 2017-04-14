@@ -8,6 +8,7 @@
     <property name="can_focus">False</property>
     <property name="hexpand">True</property>
     <property name="vexpand">True</property>
+    <property name="row_spacing">2</property>
     <property name="column_spacing">2</property>
     <child>
       <object class="GtkOverlay" id="searchResults">
@@ -281,15 +282,14 @@
     </child>
     <child>
       <object class="GtkBox" id="selectionToolsBox">
-        <property name="visible">True</property>
         <property name="can_focus">False</property>
         <child>
           <object class="GtkButton" id="addRemoveButton">
-            <property name="label" translatable="yes">Add Card to Library</property>
+            <property name="label" translatable="yes">Add to Library</property>
+            <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
-            <property name="no_show_all">True</property>
-            <signal name="clicked" handler="do_add_remove_clicked" object="searchResults" swapped="no"/>
+            <signal name="clicked" handler="do_add_clicked" swapped="no"/>
           </object>
           <packing>
             <property name="expand">False</property>

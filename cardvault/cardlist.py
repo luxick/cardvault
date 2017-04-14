@@ -1,8 +1,9 @@
 import gi
 import util
-
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GdkPixbuf, GObject
+gi.require_version('Gdk', '3.0')
+from gi.repository import Gtk, GdkPixbuf, Gdk
+
 
 
 class CardList(Gtk.ScrolledWindow):
@@ -27,7 +28,8 @@ class CardList(Gtk.ScrolledWindow):
         # 8 Mana Cost(Form: {G}{2})
         # 9 CMC
         # 10 Edition
-        self.store = Gtk.ListStore(int, str, str, str, str, str, str, str, GdkPixbuf.Pixbuf, int, str)
+        # 11 Color indicating if the card is owned or wanted
+        self.store = Gtk.ListStore(int, str, str, str, str, str, str, str, GdkPixbuf.Pixbuf, int, str, str)
         if self.filtered:
             self.filter = self.store.filter_new()
             self.filter_and_sort = Gtk.TreeModelSort(self.filter)
@@ -49,37 +51,37 @@ class CardList(Gtk.ScrolledWindow):
         text_renderer.set_property("weight", 500)
         image_renderer = Gtk.CellRendererPixbuf()
 
-        col_id = Gtk.TreeViewColumn(title="Multiverse ID", cell_renderer=text_renderer, text=0)
+        col_id = Gtk.TreeViewColumn(title="Multiverse ID", cell_renderer=text_renderer, text=0, foreground=11)
         col_id.set_visible(False)
 
-        col_title = Gtk.TreeViewColumn(title="Name", cell_renderer=bold_renderer, text=1)
+        col_title = Gtk.TreeViewColumn(title="Name", cell_renderer=bold_renderer, text=1, foreground=11)
         col_title.set_sizing(Gtk.TreeViewColumnSizing.AUTOSIZE)
         col_title.set_expand(True)
         col_title.set_sort_column_id(1)
 
-        col_supertypes = Gtk.TreeViewColumn(title="Supertypes", cell_renderer=text_renderer, text=2)
+        col_supertypes = Gtk.TreeViewColumn(title="Supertypes", cell_renderer=text_renderer, text=2, foreground=11)
         col_supertypes.set_sort_column_id(2)
         col_supertypes.set_visible(False)
 
-        col_types = Gtk.TreeViewColumn(title="Types", cell_renderer=text_renderer, text=3)
+        col_types = Gtk.TreeViewColumn(title="Types", cell_renderer=text_renderer, text=3, foreground=11)
         col_types.set_sort_column_id(3)
 
-        col_rarity = Gtk.TreeViewColumn(title="Rarity", cell_renderer=text_renderer, text=4)
+        col_rarity = Gtk.TreeViewColumn(title="Rarity", cell_renderer=text_renderer, text=4, foreground=11)
         col_rarity.set_sort_column_id(4)
 
-        col_power = Gtk.TreeViewColumn(title="Power", cell_renderer=text_renderer, text=5)
+        col_power = Gtk.TreeViewColumn(title="Power", cell_renderer=text_renderer, text=5, foreground=11)
         col_power.set_sizing(Gtk.TreeViewColumnSizing.FIXED)
         col_power.set_fixed_width(50)
         col_power.set_sort_column_id(5)
         col_power.set_visible(False)
 
-        col_thoughness = Gtk.TreeViewColumn(title="Toughness", cell_renderer=text_renderer, text=6)
+        col_thoughness = Gtk.TreeViewColumn(title="Toughness", cell_renderer=text_renderer, text=6, foreground=11)
         col_thoughness.set_sizing(Gtk.TreeViewColumnSizing.FIXED)
         col_thoughness.set_fixed_width(50)
         col_thoughness.set_sort_column_id(6)
         col_thoughness.set_visible(False)
 
-        col_printings = Gtk.TreeViewColumn(title="Printings", cell_renderer=text_renderer, text=7)
+        col_printings = Gtk.TreeViewColumn(title="Printings", cell_renderer=text_renderer, text=7, foreground=11)
         col_printings.set_sort_column_id(7)
         col_printings.set_visible(False)
 
@@ -88,10 +90,10 @@ class CardList(Gtk.ScrolledWindow):
         col_mana.set_sizing(Gtk.TreeViewColumnSizing.AUTOSIZE)
         col_mana.set_sort_column_id(9)
 
-        col_cmc = Gtk.TreeViewColumn(title="CMC", cell_renderer=text_renderer, text=9)
+        col_cmc = Gtk.TreeViewColumn(title="CMC", cell_renderer=text_renderer, text=9, foreground=11)
         col_cmc.set_visible(False)
 
-        col_set_name = Gtk.TreeViewColumn(title="Edition", cell_renderer=text_renderer, text=10)
+        col_set_name = Gtk.TreeViewColumn(title="Edition", cell_renderer=text_renderer, text=10, foreground=11)
         col_set_name.set_expand(False)
         col_set_name.set_sort_column_id(10)
 
@@ -107,26 +109,37 @@ class CardList(Gtk.ScrolledWindow):
         self.list.append_column(col_mana)
         self.list.append_column(col_cmc)
 
+    def get_selected_cards(self):
+        (model, pathlist) = self.selection.get_selected_rows()
+        output = {}
+        for path in pathlist:
+            tree_iter = model.get_iter(path)
+            card_id = model.get_value(tree_iter, 0)
+            card = self.lib[card_id]
+            output[card_id] = card
+        return output
+
     def update(self, library):
         self.store.clear()
-
         if library is None:
             return
-
         self.lib = library
-
         if self.filtered:
             self.list.freeze_child_notify()
             self.list.set_model(None)
 
         for multiverse_id, card in library.items():
             if card.multiverse_id is not None:
-                if card.supertypes is None:
-                    card.supertypes = ""
+                color = ""
+                if util.library.__contains__(multiverse_id):
+                    color = util.card_view_colors["owned"]
+                else:
+                    color = util.card_view_colors["unowned"]
+
                 item =[
                     card.multiverse_id,
                     card.name,
-                    " ".join(card.supertypes),
+                    " ".join(card.supertypes if card.supertypes else ""),
                     " ".join(card.types),
                     card.rarity,
                     card.power,
@@ -134,7 +147,8 @@ class CardList(Gtk.ScrolledWindow):
                     ", ".join(card.printings),
                     util.create_mana_icons(card.mana_cost),
                     card.cmc,
-                    card.set_name]
+                    card.set_name,
+                    color]
                 self.store.append(item)
 
         if self.filtered:

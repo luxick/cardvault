@@ -2,8 +2,7 @@ import gi
 import util
 import config
 import cardlist
-import handlers
-from gi.repository import Gtk
+from gi.repository import Gtk, Gdk
 from mtgsdk import Card
 from urllib.error import URLError, HTTPError
 gi.require_version('Gtk', '3.0')
@@ -23,10 +22,15 @@ def init_search_view(app):
     # Create Model for search results
     _init_results_tree(app)
 
+    app.ui.get_object("tagTree").drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
+
 
 def reload_serach_view(app):
     pass
 
+
+def add_to_library(card):
+    util.add_card_to_lib(card)
 
 def search_cards(term):
     # Load filters from UI
@@ -65,6 +69,7 @@ def _init_results_tree(app):
     card_list = cardlist.CardList(False)
     card_list.set_name("resultsScroller")
     card_list.list.connect("row-activated", app.handlers.on_search_card_selected)
+    card_list.selection.connect("changed", app.handlers.on_search_selection_changed)
     overlay.add(card_list)
     overlay.add_overlay(app.ui.get_object("searchOverlay"))
     overlay.show_all()    

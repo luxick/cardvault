@@ -21,6 +21,8 @@ set_dict = {}
 library = {}
 # Dictionary for tagged cards
 tags = {}
+# Dictionary of untagged cards
+untagged_cards = {}
 
 status_bar = None
 app = None
@@ -30,6 +32,12 @@ legality_colors ={
     "Banned": "#C65642",
     "Restricted": "#D39F30",
     "Legal": "#62B62F"
+}
+
+card_view_colors ={
+    "unowned": "black",
+    "wanted": "#D39F30",
+    "owned": "#62B62F"
 }
 
 rarity_dict = {
@@ -166,21 +174,51 @@ def reload_image_cache():
 # endregion
 
 
+def get_library(tag=None):
+    if tag is None or tag == "All":
+        return library
+    else:
+        lib = {}
+        for card_id in tags[tag]:
+            lib[card_id] = library[card_id]
+        return lib
+
+
+def get_untagged_cards():
+    lib = {}
+    for card_id in untagged_cards.keys():
+        lib[card_id] = library[card_id]
+    return lib
+
+
+def tag_card(card, tag):
+    if untagged_cards.__contains__(card.multiverse_id):
+        del untagged_cards[card.multiverse_id]
+    list = tags[tag]
+    list.append(card.multiverse_id)
+    global unsaved_changes
+    unsaved_changes = True
+
+
 def add_tag(tag):
-    tags[tag] = {}
+    tags[tag] = []
     app.push_status("Added Tag \"" + tag + "\"")
     global unsaved_changes
     unsaved_changes = True
 
 
 def remove_tag(tag):
-    tags[tag] = None
+    del tags[tag]
     app.push_status("Removed Tag \"" + tag + "\"")
     global unsaved_changes
     unsaved_changes = True
 
 
-def add_card_to_lib(card):
+def add_card_to_lib(card, tag=None):
+    if tag is None:
+        untagged_cards[card.multiverse_id] = None
+    else:
+        tag_card(card, tag)
     library[card.multiverse_id] = card
     app.push_status(card.name + " added to library")
     global unsaved_changes
@@ -193,8 +231,9 @@ def remove_card_from_lib(card):
     global unsaved_changes
     unsaved_changes = True
 
+
 def show_question_dialog(title, message):
-    dialog = Gtk.MessageDialog(app.ui.get_object("mainWindow"), 0, Gtk.MessageType.QUESTION,
+    dialog = Gtk.MessageDialog(app.ui.get_object("mainWindow"), 0, Gtk.MessageType.WARNING,
                                Gtk.ButtonsType.YES_NO, title)
     dialog.format_secondary_text(message)
     response = dialog.run()
@@ -234,7 +273,6 @@ def load_card_image_online(card, sizex, sizey):
         print("No Image URL provided")
         return load_dummy_image(sizex, sizey)
     filename = config.image_cache_path + card.multiverse_id.__str__() + ".PNG"
-    print("Loading image for " + card.name + "from: " + url)
     request.urlretrieve(url, filename)
     reload_image_cache()
     return GdkPixbuf.Pixbuf.new_from_file_at_size(filename, sizex, sizey)

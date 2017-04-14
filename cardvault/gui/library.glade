@@ -10,6 +10,16 @@
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkEntryCompletion" id="tagCompleter">
+    <property name="model">tagStore</property>
+    <property name="text_column">0</property>
+    <child>
+      <object class="GtkCellRendererText"/>
+      <attributes>
+        <attribute name="text">0</attribute>
+      </attributes>
+    </child>
+  </object>
   <object class="GtkPaned" id="libraryView">
     <property name="name">Library</property>
     <property name="visible">True</property>
@@ -31,13 +41,15 @@
             <child>
               <object class="GtkTreeView" id="tagTree">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
+                <property name="can_focus">False</property>
                 <property name="vexpand">True</property>
                 <property name="model">tagStore</property>
-                <property name="reorderable">True</property>
                 <property name="search_column">1</property>
+                <property name="activate_on_single_click">True</property>
+                <signal name="drag-data-received" handler="on_drag_data_received" swapped="no"/>
+                <signal name="row-activated" handler="on_tag_selected" object="tagTreeSelection" swapped="no"/>
                 <child internal-child="selection">
-                  <object class="GtkTreeSelection"/>
+                  <object class="GtkTreeSelection" id="tagTreeSelection"/>
                 </child>
                 <child>
                   <object class="GtkTreeViewColumn" id="col_tag">
@@ -69,6 +81,45 @@
             <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkButton" id="showUntagged">
+                <property name="label" translatable="yes">Untagged</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="do_show_untagged_clicked" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="showAllButton">
+                <property name="label" translatable="yes">All</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="do_show_all_clicked" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
           </packing>
         </child>
         <child>
@@ -109,7 +160,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">1</property>
+            <property name="position">2</property>
           </packing>
         </child>
       </object>
@@ -145,10 +196,31 @@
               </packing>
             </child>
             <child>
-              <placeholder/>
+              <object class="GtkEntry" id="tagCardEntry">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="completion">tagCompleter</property>
+                <signal name="activate" handler="do_tag_cards" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
             </child>
             <child>
-              <placeholder/>
+              <object class="GtkButton" id="tagCardButton">
+                <property name="label" translatable="yes">Tag card</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="do_tag_cards" object="tagCardEntry" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
             </child>
           </object>
           <packing>
