@@ -1,6 +1,6 @@
 import gi
 import util
-from logger import *
+import logger
 from gi.repository import Gtk, GdkPixbuf, Gdk
 import time
 gi.require_version('Gtk', '3.0')
@@ -156,10 +156,7 @@ class CardList(Gtk.ScrolledWindow):
                     color]
                 self.store.append(item)
         end = time.time()
-        log("Time to build Table: " + str(round(end - start, 3)), LogLevel.Info)
-
-
-
+        logger.log("Time to build Table: " + str(round(end - start, 3)), logger.LogLevel.Info)
         if self.filtered:
             self.list.set_model(self.filter_and_sort)
             self.list.thaw_child_notify()

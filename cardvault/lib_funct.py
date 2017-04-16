@@ -19,7 +19,6 @@ def init_library_view(app):
 
 
 def reload_library(app, tag=None):
-    lib = {}
     if tag == "untagged":
         lib = util.get_untagged_cards()
         tag = None

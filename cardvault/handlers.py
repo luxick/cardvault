@@ -102,8 +102,10 @@ class Handlers:
         card_view = self.app.ui.get_object("libraryContainer").get_child()
         selected_cards = card_view.get_selected_cards()
         tag = entry.get_text()
-        lib_funct.tag_cards(selected_cards, tag)
-        lib_funct.reload_library(self.app, tag)
+        if tag != "":
+            lib_funct.tag_cards(selected_cards, tag)
+            lib_funct.reload_library(self.app, tag)
+        entry.set_text("")
 
     def on_drag_data_received(self, widget, drag_context, x,y, data,info, time):
         print("drag received")

@@ -3,8 +3,9 @@ import datetime
 import gi
 import re
 import config
-import enum
+import logger
 import network
+import copy
 from gi.repository import GdkPixbuf, Gtk
 from PIL import Image as PImage
 from urllib import request
@@ -24,8 +25,6 @@ set_dict = {}
 library = {}
 # Dictionary for tagged cards
 tags = {}
-# Dictionary of untagged cards
-untagged_cards = {}
 
 status_bar = None
 app = None
@@ -62,12 +61,17 @@ def export_library():
     dialog.set_current_folder(os.path.expanduser("~"))
     response = dialog.run()
     if response == Gtk.ResponseType.OK:
+        # prepare export file
+        export = {"library": library, "tags": tags}
         try:
-            pickle.dump(library, open(dialog.get_filename(), 'wb'))
-        except:
-            show_message("Error", "Error while saving library to disk")
-        app.push_status("Library exported to \"" + dialog.get_filename() + "\"")
-        print("Library exported to \"", dialog.get_filename() + "\"")
+            pickle.dump(export, open(dialog.get_filename(), 'wb'))
+
+            app.push_status("Library exported to \"" + dialog.get_filename() + "\"")
+            logger.log("Library exported to \"" + dialog.get_filename() + "\"", logger.LogLevel.Info)
+        except OSError as err:
+            show_message("Error", err.strerror)
+            logger.log(str(err), logger.LogLevel.Error)
+
     dialog.destroy()
 
 
@@ -83,13 +87,32 @@ def import_library():
                                                  "Importing a library will override your current library. "
                                                  "Proceed?")
         if override_question == Gtk.ResponseType.YES:
-            imported = pickle.load(open(dialog.get_filename(), 'rb'))
-            library.clear()
-            for id, card in imported.items():
-                library[id] = card
+
+            try:
+                imported = pickle.load(open(dialog.get_filename(), 'rb'))
+            except pickle.UnpicklingError as err:
+                show_message("Error", "Imported file is invalid")
+                logger.log(str(err) + " while importing", logger.LogLevel.Error)
+                dialog.destroy()
+                return
+
+            # Check imported file
+            try:
+                global library
+                library = imported["library"]
+                global tags
+                tags = imported["tags"]
+            except KeyError as err:
+                logger.log("Invalid library format " + str(err), logger.LogLevel.Warning)
+
+                # Try fallback method
+                library.clear()
+                for id, card in imported.items():
+                    library[id] = card
+
             save_library()
             app.push_status("Library imported")
-            print("Library imported")
+            logger.log("Library imported", logger.LogLevel.Info)
     dialog.destroy()
 
 
@@ -103,13 +126,15 @@ def save_library():
     try:
         pickle.dump(library, open(lib_path, 'wb'))
         pickle.dump(tags, open(tag_path, 'wb'))
-    except:
-        show_message("Error", "Error while saving library to disk")
+    except OSError as err:
+        show_message("Error", err.strerror)
+        logger.log(str(err), logger.LogLevel.Error)
         return
 
     global unsaved_changes
     unsaved_changes = False
     app.push_status("Library saved.")
+    logger.log("library saved", logger.LogLevel.Info)
 
 
 def load_library():
@@ -122,11 +147,12 @@ def load_library():
             library_loaded = pickle.load(open(lib_path, 'rb'))
             for id, card in library_loaded.items():
                 library[id] = card
-        except :
-            show_message("Error", "Error while loading library from disk")
+        except OSError as err:
+            show_message("Error", err.strerror)
+            logger.log(str(err), logger.LogLevel.Error)
     else:
         save_library()
-        print("No library file found, created new one")
+        logger.log("No Library file found, creating new one", logger.LogLevel.Warning)
 
 
 def load_tags():
@@ -134,13 +160,14 @@ def load_tags():
     tags.clear()
     if not os.path.isfile(tag_path):
         save_library()
-        print("No tags file found, created new one")
+        logger.log("No tags file found, creating new one", logger.LogLevel.Warning)
     try:
         tags_loaded = pickle.load(open(tag_path, 'rb'))
         for tag, ids in tags_loaded.items():
             tags[tag] = ids
-    except:
-        show_message("Error", "Error while loading library from disk")
+    except OSError as err:
+        show_message("Error", err.strerror)
+        logger.log(str(err), logger.LogLevel.Error)
 
 
 def load_sets():
@@ -208,15 +235,17 @@ def get_library(tag=None):
 
 
 def get_untagged_cards():
-    lib = {}
-    for card_id in untagged_cards.keys():
-        lib[card_id] = library[card_id]
+    lib = copy.copy(library)
+    for ids in tags.values():
+        for card_id in ids:
+            try:
+                del lib[card_id]
+            except KeyError:
+                pass
     return lib
 
 
 def tag_card(card, tag):
-    if untagged_cards.__contains__(card.multiverse_id):
-        del untagged_cards[card.multiverse_id]
     list = tags[tag]
     list.append(card.multiverse_id)
     global unsaved_changes
@@ -238,9 +267,7 @@ def remove_tag(tag):
 
 
 def add_card_to_lib(card, tag=None):
-    if tag is None:
-        untagged_cards[card.multiverse_id] = None
-    else:
+    if tag is not None:
         tag_card(card, tag)
     library[card.multiverse_id] = card
     app.push_status(card.name + " added to library")

@@ -2,6 +2,7 @@ import gi
 import util
 import config
 import cardlist
+import logger
 from gi.repository import Gtk, Gdk
 from mtgsdk import Card
 from urllib.error import URLError, HTTPError
@@ -32,9 +33,12 @@ def reload_serach_view(app):
 def add_to_library(card):
     util.add_card_to_lib(card)
 
+
 def search_cards(term):
+    logger.log("Starting online search for '" + term + "'", logger.LogLevel.Info)
     # Load filters from UI
     filters = _get_filters(util.app)
+    logger.log("Used Filters: " + str(filters), logger.LogLevel.Info)
 
     # Load card info from internet
     try:
@@ -52,7 +56,7 @@ def search_cards(term):
     if len(cards) == 0:
         # TODO UI show no cards found
         return
-
+    logger.log("Found " + str(len(cards)) + " cards", logger.LogLevel.Info)
     # Remove duplicate entries
     if config.show_from_all_sets is False:
         cards = _remove_duplicates(cards)
