@@ -28,6 +28,7 @@ class MainWindow:
 
         # Load local image Data
         util.reload_image_cache()
+        util.reload_preconstructed_icons()
         util.load_mana_icons()
 
         util.load_sets()
@@ -124,7 +125,6 @@ class MainWindow:
             builder.get_object("ruleBox").set_visible(False)
 
         window.show_all()
-
 
         def eval_key_pressed(widget,event):
             key, modifier = Gtk.accelerator_parse('Escape')

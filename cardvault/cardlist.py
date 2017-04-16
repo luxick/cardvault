@@ -1,9 +1,10 @@
 import gi
 import util
+from logger import *
+from gi.repository import Gtk, GdkPixbuf, Gdk
+import time
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
-from gi.repository import Gtk, GdkPixbuf, Gdk
-
 
 
 class CardList(Gtk.ScrolledWindow):
@@ -119,19 +120,23 @@ class CardList(Gtk.ScrolledWindow):
             output[card_id] = card
         return output
 
-    def update(self, library):
+    def update(self, library, colorize=False):
         self.store.clear()
+
         if library is None:
             return
         self.lib = library
+
         if self.filtered:
             self.list.freeze_child_notify()
             self.list.set_model(None)
 
-        for multiverse_id, card in library.items():
+        start = time.time()
+        for card_id, card in library.items():
+
             if card.multiverse_id is not None:
-                color = ""
-                if util.library.__contains__(multiverse_id):
+
+                if util.library.__contains__(card_id) and colorize:
                     color = util.card_view_colors["owned"]
                 else:
                     color = util.card_view_colors["unowned"]
@@ -145,47 +150,19 @@ class CardList(Gtk.ScrolledWindow):
                     card.power,
                     card.toughness,
                     ", ".join(card.printings),
-                    util.create_mana_icons(card.mana_cost),
+                    util.get_mana_icons(card.mana_cost),
                     card.cmc,
                     card.set_name,
                     color]
                 self.store.append(item)
+        end = time.time()
+        log("Time to build Table: " + str(round(end - start, 3)), LogLevel.Info)
+
+
 
         if self.filtered:
             self.list.set_model(self.filter_and_sort)
             self.list.thaw_child_notify()
-
-    def update_generate(self, library, step=128):
-        n = 0
-        self.store.clear()
-        self.list.freeze_child_notify()
-        for multiverse_id, card in library.items():
-            if card.multiverse_id is not None:
-                if card.supertypes is None:
-                    card.supertypes = ""
-                item =[
-                    card.multiverse_id,
-                    card.name,
-                    " ".join(card.supertypes),
-                    " ".join(card.types),
-                    card.rarity,
-                    card.power,
-                    card.toughness,
-                    ", ".join(card.printings),
-                    util.create_mana_icons(card.mana_cost),
-                    card.cmc,
-                    card.set_name]
-                self.store.append(item)
-
-                n += 1
-                if (n % step) == 0:
-                    self.list.thaw_child_notify()
-                    yield True
-                    self.list.freeze_child_notify()
-
-        self.list.thaw_child_notify()
-        # stop idle_add()
-        yield False
 
     def compare_rarity(self, model, row1, row2, user_data):
         # Column for rarity

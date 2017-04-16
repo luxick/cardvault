@@ -3,6 +3,7 @@ import datetime
 import gi
 import re
 import config
+import enum
 import network
 from gi.repository import GdkPixbuf, Gtk
 from PIL import Image as PImage
@@ -14,6 +15,8 @@ gi.require_version('Gtk', '3.0')
 # Locally stored images for faster loading times
 imagecache = {}
 manaicons = {}
+mana_icons_preconstructed = {}
+
 set_list = []
 set_dict = {}
 
@@ -48,6 +51,7 @@ rarity_dict = {
     "mythic rare": 4
 }
 card_types = ["Creature", "Artifact", "Instant", "Enchantment", "Sorcery", "Land", "Planeswalker"]
+
 
 def export_library():
     dialog = Gtk.FileChooserDialog("Export Library", app.ui.get_object("mainWindow"),
@@ -171,6 +175,25 @@ def reload_image_cache():
         except OSError as err:
             print("Error loading image: " + str(err))
 
+
+def reload_preconstructed_icons():
+    if not os.path.exists(config.icon_cache_path):
+        os.makedirs(config.icon_cache_path)
+
+    icon_list = os.listdir(config.icon_cache_path)
+    mana_icons_preconstructed.clear()
+    for icon in icon_list:
+        list = re.findall("{(.*?)}", str(icon))
+        pic_width = len(list) * 105
+        pic_height = 105
+        try:
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file(config.icon_cache_path + icon)
+            pixbuf = pixbuf.scale_simple(pic_width / 5, pic_height / 5, GdkPixbuf.InterpType.HYPER)
+            mana_icons_preconstructed[icon] = pixbuf
+        except OSError as err:
+            print("Error loading icon: " + str(err))
+
+
 # endregion
 
 
@@ -288,6 +311,17 @@ def load_card_image(card, sizex, sizey):
         return load_card_image_online(card, sizex, sizey)
 
 
+def get_mana_icons(mana_string):
+    if not mana_string:
+        return
+    try:
+        icon = mana_icons_preconstructed[mana_string.replace("/", "") + ".png"]
+    except KeyError:
+        icon = create_mana_icons(mana_string)
+        mana_icons_preconstructed[mana_string] = icon
+    return icon
+
+
 def create_mana_icons(mana_string):
     # Convert the string to a List
     list = re.findall("{(.*?)}", str(mana_string))
@@ -307,13 +341,12 @@ def create_mana_icons(mana_string):
         else:
             image.paste(loaded, (xpos, 0))
         poscounter += 1
-    filename = "icon.png"
-    path = config.cache_path + filename
+    path = config.icon_cache_path + mana_string.replace("/", "") + ".png"
     image.save(path)
     try:
         pixbuf = GdkPixbuf.Pixbuf.new_from_file(path)
         pixbuf = pixbuf.scale_simple(image.width / 5, image.height / 5, GdkPixbuf.InterpType.HYPER)
     except:
         return
-    # os.remove(path)
+    mana_icons_preconstructed[mana_string.replace("/", "") + ".png"] = pixbuf
     return pixbuf

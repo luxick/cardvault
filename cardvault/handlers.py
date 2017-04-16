@@ -52,7 +52,7 @@ class Handlers:
         results = search_funct.search_cards(search_term)
 
         card_list = self.app.ui.get_object("searchResults").get_child()
-        card_list.update(results)
+        card_list.update(results, colorize=True)
 
         self.app.ui.get_object("searchOverlay").set_visible(False)
 
