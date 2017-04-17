@@ -1,13 +1,15 @@
-import os
-import gi
-import re
-import enum
 import copy
+import enum
 import json
-from gi.repository import GdkPixbuf, Gtk
-from PIL import Image as PImage
+import os
+import re
 from urllib import request
+
+import gi
 import six.moves.cPickle as pickle
+from PIL import Image as PImage
+from gi.repository import GdkPixbuf
+
 gi.require_version('Gtk', '3.0')
 
 from mtgsdk import Set
@@ -214,8 +216,6 @@ def import_library(path):
 
 
 def save_file(path, file):
-    if not os.path.exists(path):
-        os.makedirs(path)
     # Serialize using cPickle
     try:
         pickle.dump(file, open(path, 'wb'))
@@ -227,7 +227,8 @@ def save_file(path, file):
 
 def load_file(path):
     if not os.path.isfile(path):
-        log(path + " does not exist", LogLevel.Error)
+        log(path + " does not exist", LogLevel.Warning)
+        return
     try:
         loaded = pickle.load(open(path, 'rb'))
     except OSError as err:

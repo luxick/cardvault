@@ -31,7 +31,7 @@ class Handlers:
         if response == Gtk.ResponseType.OK:
             # prepare export file
             file = {"library": self.app.library, "tags": self.app.tags}
-            util.export_library(dialog.get_filename, file)
+            util.export_library(dialog.get_filename(), file)
 
         dialog.destroy()
 
@@ -54,6 +54,7 @@ class Handlers:
                 self.app.tags = tags
                 # Cause current page to reload with imported data
                 self.app.current_page.emit('show')
+                self.app.unsaved_changes = True
         dialog.destroy()
 
     def on_view_changed(self, item):

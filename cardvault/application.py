@@ -182,10 +182,19 @@ class Application:
         self.push_status("Library saved")
 
     def load_library(self):
+        all_existing = True
         # Load library file
         self.library = util.load_file(util.get_root_filename("library"))
+        if not self.library:
+            all_existing = False
+            self.library = {}
         # Load tags file
         self.tags = util.load_file(util.get_root_filename("tags"))
+        if not self.tags:
+            all_existing = False
+            self.tags = {}
+        if not all_existing:
+            self.save_library()
         self.push_status("Library loaded")
 
     def get_untagged_cards(self):

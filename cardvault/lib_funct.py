@@ -11,7 +11,6 @@ def init_library_view(app):
     card_list.list.connect("row-activated", app.handlers.on_library_card_selected)
     container.add(card_list)
     container.add_overlay(app.ui.get_object("noResults"))
-    container.add_overlay(app.ui.get_object("libEmpty"))
     container.show_all()
 
     app.ui.get_object("noResults").set_visible(False)
@@ -26,7 +25,6 @@ def reload_library(app, tag=None):
     reload_tag_list(app, tag)
     card_tree = app.ui.get_object("libraryContainer").get_child()
     if lib:
-        app.ui.get_object("libEmpty").set_visible(False)
         app.ui.get_object("noResults").set_visible(False)
         card_tree.update(lib)
     else:

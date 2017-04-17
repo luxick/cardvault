@@ -1,9 +1,12 @@
-import gi
-from cardvault import util
-from cardvault import cardlist
-from gi.repository import Gtk, Gdk
-from mtgsdk import Card
 from urllib.error import URLError, HTTPError
+
+import gi
+from gi.repository import Gtk, Gdk
+
+from cardvault import cardlist
+from cardvault import util
+from mtgsdk import Card
+
 gi.require_version('Gtk', '3.0')
 
 
