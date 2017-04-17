@@ -10,6 +10,7 @@ def init_library_view(app):
     card_list = cardlist.CardList(True, app)
     card_list.set_name("libScroller")
     card_list.list.connect("row-activated", app.handlers.on_library_card_selected)
+    card_list.filter.set_visible_func(app.filter_lib_func)
     container.add(card_list)
     container.add_overlay(app.ui.get_object("noResults"))
     container.show_all()
@@ -24,6 +25,9 @@ def reload_library(app, tag=None):
     else:
         lib = app.get_tagged_cards(tag)
     reload_tag_list(app, tag)
+    tag_combo = app.ui.get_object("tagCardCombo")
+    tag_combo.set_model(app.ui.get_object("tagStore"))
+
     card_tree = app.ui.get_object("libraryContainer").get_child()
     if lib:
         app.ui.get_object("noResults").set_visible(False)
@@ -40,7 +44,7 @@ def add_new_tag(name, app):
 
 def reload_tag_list(app, preserve=False):
     tree = app.ui.get_object("tagTree")
-    (path, column)  = tree.get_cursor()
+    (path, column) = tree.get_cursor()
     store = tree.get_model()
     store.clear()
     for tag, ids in app.tags.items():
@@ -58,3 +62,4 @@ def tag_cards(card_list, tag, app):
     for card in card_list.values():
         if not app.tags[tag].__contains__(card.multiverse_id):
             app.tag_card(card, tag)
+

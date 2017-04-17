@@ -296,6 +296,13 @@ class Application:
             self.precon_icons[icon_name] = icon
         return icon
 
+    def filter_lib_func(self, model, iter, data):
+        filter_text = self.ui.get_object("searchLibEntry").get_text()
+        if filter_text == "":
+            return True
+        else:
+            return filter_text.lower() in model[iter][1].lower()
+
 
 def main():
     win = Application()

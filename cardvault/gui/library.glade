@@ -35,7 +35,6 @@
   <object class="GtkEntryCompletion" id="tagCompleter">
     <property name="model">tagStore</property>
     <property name="text_column">0</property>
-    <property name="inline_selection">True</property>
     <child>
       <object class="GtkCellRendererText"/>
       <attributes>
@@ -203,6 +202,7 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="vexpand">False</property>
+            <property name="spacing">2</property>
             <child>
               <object class="GtkSearchEntry" id="searchLibEntry">
                 <property name="visible">True</property>
@@ -211,6 +211,7 @@
                 <property name="primary_icon_activatable">False</property>
                 <property name="primary_icon_sensitive">False</property>
                 <property name="placeholder_text" translatable="yes">Search Library</property>
+                <signal name="changed" handler="do_refilter_library" object="libraryContainer" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -219,11 +220,19 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="tagCardEntry">
+              <object class="GtkComboBoxText" id="tagCardCombo">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="completion">tagCompleter</property>
-                <signal name="activate" handler="do_tag_cards" swapped="no"/>
+                <property name="can_focus">False</property>
+                <property name="has_entry">True</property>
+                <child internal-child="entry">
+                  <object class="GtkEntry" id="tagCardEntry">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="caps_lock_warning">False</property>
+                    <property name="placeholder_text" translatable="yes">Tag selected cards</property>
+                    <property name="completion">tagCompleter</property>
+                  </object>
+                </child>
               </object>
               <packing>
                 <property name="expand">False</property>

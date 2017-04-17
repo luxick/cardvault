@@ -177,6 +177,10 @@ class Handlers:
             self.app.remove_tag(tag)
             self.app.current_page.emit('show')
 
+    def do_refilter_library(self, container):
+        # Access Card View inside of container
+        container.get_child().filter.refilter()
+
     # Handlers for TreeViews etc. wich have been not added by Glade
 
     # ----------------Search-----------------
