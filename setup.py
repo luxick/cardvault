@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 from cardvault import util
 
 try:
-    LONG_DESCRIPTION = open("README.rst").read()
+    LONG_DESCRIPTION = open("README.md").read()
 except IOError:
     LONG_DESCRIPTION = __doc__
 
