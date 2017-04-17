@@ -1,8 +1,6 @@
 import gi
-import util
-import config
-import cardlist
-import logger
+from cardvault import util
+from cardvault import cardlist
 from gi.repository import Gtk, Gdk
 from mtgsdk import Card
 from urllib.error import URLError, HTTPError
@@ -13,9 +11,9 @@ def init_search_view(app):
     # set mana icons on filter buttons
     buttons = [x for x in app.ui.get_object("manaFilterGrid").get_children()
                if isinstance(x, Gtk.ToggleButton)]
-    _init_mana_buttons(buttons)
+    _init_mana_buttons(app, buttons)
     # set auto completion for filter entry
-    _init_set_entry(app.ui.get_object("setEntry"))
+    _init_set_entry(app, app.ui.get_object("setEntry"))
     # Fill rarity box
     _init_combo_box(app.ui.get_object("rarityCombo"), util.rarity_dict.keys())
     # Fill type box
@@ -30,15 +28,34 @@ def reload_serach_view(app):
     pass
 
 
-def add_to_library(card):
-    util.add_card_to_lib(card)
+def get_filters(app):
+    output = {}
+    # Mana colors
+    color_list = []
+    # Go through mana color buttons an get the active filters
+    for button in app.ui.get_object("manaFilterGrid").get_children():
+        if isinstance(button, Gtk.ToggleButton):
+            if button.get_active():
+                color_list.append(button.get_name())
+    output["mana"] = ",".join(color_list)
+    # Rarity
+    combo = app.ui.get_object("rarityCombo")
+    output["rarity"] = _get_combo_value(combo)
+    # Type
+    combo = app.ui.get_object("typeCombo")
+    output["type"] = _get_combo_value(combo)
+    # Set
+    name = app.ui.get_object("setEntry").get_text()
+    output["set"] = ""
+    for set in app.sets.values():
+        if set.name == name:
+            output["set"] = set.code
+    return output
 
 
-def search_cards(term):
-    logger.log("Starting online search for '" + term + "'", logger.LogLevel.Info)
-    # Load filters from UI
-    filters = _get_filters(util.app)
-    logger.log("Used Filters: " + str(filters), logger.LogLevel.Info)
+def search_cards(term, filters):
+    util.log("Starting online search for '" + term + "'", util.LogLevel.Info)
+    util.log("Used Filters: " + str(filters), util.LogLevel.Info)
 
     # Load card info from internet
     try:
@@ -56,9 +73,9 @@ def search_cards(term):
     if len(cards) == 0:
         # TODO UI show no cards found
         return
-    logger.log("Found " + str(len(cards)) + " cards", logger.LogLevel.Info)
+    util.log("Found " + str(len(cards)) + " cards", util.LogLevel.Info)
     # Remove duplicate entries
-    if config.show_from_all_sets is False:
+    if util.SHOW_FROM_ALL_SETS is False:
         cards = _remove_duplicates(cards)
 
     # Pack results in a dictionary
@@ -70,7 +87,7 @@ def search_cards(term):
 
 def _init_results_tree(app):
     overlay = app.ui.get_object("searchResults")
-    card_list = cardlist.CardList(False)
+    card_list = cardlist.CardList(False, app)
     card_list.set_name("resultsScroller")
     card_list.list.connect("row-activated", app.handlers.on_search_card_selected)
     card_list.selection.connect("changed", app.handlers.on_search_selection_changed)
@@ -91,31 +108,6 @@ def _init_combo_box(combo, list):
     combo.set_active(0)
 
 
-def _get_filters(app):
-    output = {}
-    # Mana colors
-    color_list = []
-    # Go through mana color buttons an get the active filters
-    for button in app.ui.get_object("manaFilterGrid").get_children():
-        if isinstance(button, Gtk.ToggleButton):
-            if button.get_active():
-                color_list.append(button.get_name())
-    output["mana"] = ",".join(color_list)
-    # Rarity
-    combo = app.ui.get_object("rarityCombo")
-    output["rarity"] = _get_combo_value(combo)
-    # Type
-    combo = app.ui.get_object("typeCombo")
-    output["type"] = _get_combo_value(combo)
-    # Set
-    name = app.ui.get_object("setEntry").get_text()
-    output["set"] = ""
-    for set in util.set_list:
-        if set.name == name:
-            output["set"] = set.code
-    return output
-
-
 def _remove_duplicates(cards):
     unique_cards = []
     unique_names = []
@@ -133,15 +125,15 @@ def _get_combo_value(combo):
     return value.replace("All", "")
 
 
-def _init_mana_buttons(button_list):
+def _init_mana_buttons(app, button_list):
     for button in button_list:
-        image = Gtk.Image.new_from_pixbuf(util.create_mana_icons("{" + button.get_name() + "}"))
+        image = Gtk.Image.new_from_pixbuf(app.get_mana_icons("{" + button.get_name() + "}"))
         button.set_image(image)
 
 
-def _init_set_entry(entry):
+def _init_set_entry(app, entry):
     set_store = Gtk.ListStore(str, str)
-    for set in util.set_list:
+    for set in app.sets.values():
         set_store.append([set.name, set.code])
     completer = Gtk.EntryCompletion()
     completer.set_model(set_store)

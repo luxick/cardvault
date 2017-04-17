@@ -1,34 +1,46 @@
 import os
-import datetime
 import gi
 import re
-import config
-import logger
-import network
+import enum
 import copy
+import json
 from gi.repository import GdkPixbuf, Gtk
 from PIL import Image as PImage
 from urllib import request
 import six.moves.cPickle as pickle
 gi.require_version('Gtk', '3.0')
 
+from mtgsdk import Set
+from mtgsdk import MtgException
 
-# Locally stored images for faster loading times
-imagecache = {}
-manaicons = {}
-mana_icons_preconstructed = {}
+# Title of the Program Window
+APPLICATION_TITLE = "Card Vault"
 
-set_list = []
-set_dict = {}
+# Program version
+VERSION = "0.5.0"
 
-# Card library object
-library = {}
-# Dictionary for tagged cards
-tags = {}
+# Path of image cache
+CACHE_PATH = os.path.expanduser('~') + "/.cardvault/"
+IMAGE_CACHE_PATH = os.path.expanduser('~') + "/.cardvault/images/"
+ICON_CACHE_PATH = os.path.expanduser('~') + "/.cardvault/icons/"
 
-status_bar = None
-app = None
-unsaved_changes = False
+# When True Search view will list a card multiple times for each set they appear in
+SHOW_FROM_ALL_SETS = True
+
+START_PAGE = "search"
+
+LOG_LEVEL = 1
+
+default_config = {
+    "hide_duplicates_in_search": False,
+    "start_page": "search",
+    "log_level": 3,
+    "legality_colors": {
+        "Banned": "#C65642",
+        "Restricted": "#D39F30",
+        "Legal": "#62B62F"
+    }
+}
 
 legality_colors ={
     "Banned": "#C65642",
@@ -52,264 +64,176 @@ rarity_dict = {
 card_types = ["Creature", "Artifact", "Instant", "Enchantment", "Sorcery", "Land", "Planeswalker"]
 
 
-def export_library():
-    dialog = Gtk.FileChooserDialog("Export Library", app.ui.get_object("mainWindow"),
-                                   Gtk.FileChooserAction.SAVE,
-                                   (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                                    Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
-    dialog.set_current_name("mtg_export-" + datetime.datetime.now().strftime("%Y-%m-%d"))
-    dialog.set_current_folder(os.path.expanduser("~"))
-    response = dialog.run()
-    if response == Gtk.ResponseType.OK:
-        # prepare export file
-        export = {"library": library, "tags": tags}
-        try:
-            pickle.dump(export, open(dialog.get_filename(), 'wb'))
-
-            app.push_status("Library exported to \"" + dialog.get_filename() + "\"")
-            logger.log("Library exported to \"" + dialog.get_filename() + "\"", logger.LogLevel.Info)
-        except OSError as err:
-            show_message("Error", err.strerror)
-            logger.log(str(err), logger.LogLevel.Error)
-
-    dialog.destroy()
+class LogLevel(enum.Enum):
+    Error = 1
+    Warning = 2
+    Info = 3
 
 
-def import_library():
-    dialog = Gtk.FileChooserDialog("Import Library", app.ui.get_object("mainWindow"),
-                                   Gtk.FileChooserAction.OPEN,
-                                   (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                                    Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
-    dialog.set_current_folder(os.path.expanduser("~"))
-    response = dialog.run()
-    if response == Gtk.ResponseType.OK:
-        override_question = show_question_dialog("Import Library",
-                                                 "Importing a library will override your current library. "
-                                                 "Proceed?")
-        if override_question == Gtk.ResponseType.YES:
-
-            try:
-                imported = pickle.load(open(dialog.get_filename(), 'rb'))
-            except pickle.UnpicklingError as err:
-                show_message("Error", "Imported file is invalid")
-                logger.log(str(err) + " while importing", logger.LogLevel.Error)
-                dialog.destroy()
-                return
-
-            # Check imported file
-            try:
-                global library
-                library = imported["library"]
-                global tags
-                tags = imported["tags"]
-            except KeyError as err:
-                logger.log("Invalid library format " + str(err), logger.LogLevel.Warning)
-
-                # Try fallback method
-                library.clear()
-                for id, card in imported.items():
-                    library[id] = card
-
-            save_library()
-            app.push_status("Library imported")
-            logger.log("Library imported", logger.LogLevel.Info)
-    dialog.destroy()
+def log(message, log_level):
+    if log_level.value <= LOG_LEVEL:
+        level_string = "[" + log_level.name + "] "
+        print(level_string + message)
 
 
-def save_library():
-    if not os.path.exists(config.cache_path):
-        os.makedirs(config.cache_path)
-    lib_path = config.cache_path + "library"
-    tag_path = config.cache_path + "tags"
-
-    # Serialize library object using pickle
+def parse_config(filename, default):
+    config = copy.copy(default)
     try:
-        pickle.dump(library, open(lib_path, 'wb'))
-        pickle.dump(tags, open(tag_path, 'wb'))
-    except OSError as err:
-        show_message("Error", err.strerror)
-        logger.log(str(err), logger.LogLevel.Error)
+        with open(filename) as configfile:
+            loaded_config = json.load(configfile)
+            if 'legality_colors' in config and 'legality_colors' in loaded_config:
+                # Need to prevent nested dict from being overwritten with an incomplete dict
+                config['legality_colors'].update(loaded_config['legality_colors'])
+                loaded_config['legality_colors'] = config['legality_colors']
+            config.update(loaded_config)
+    except IOError:
+        # Will just use the default config
+        # and create the file for manual editing
+        save_config(config, filename)
+    except ValueError:
+        # There's a syntax error in the config file
+        log("Syntax error wihle parsing config file", LogLevel.Error)
         return
-
-    global unsaved_changes
-    unsaved_changes = False
-    app.push_status("Library saved.")
-    logger.log("library saved", logger.LogLevel.Info)
+    return config
 
 
-def load_library():
-    lib_path = config.cache_path + "library"
-    library.clear()
+def save_config(config_dict, filename):
+    path = os.path.dirname(filename)
+    if not os.path.isdir(path):
+        os.mkdir(path)
 
-    if os.path.isfile(lib_path):
-        # Deserialize using pickle
+    with open(filename, 'wb') as configfile:
+        configfile.write(json.dumps(config_dict, sort_keys=True,
+                  indent=4, separators=(',', ': ')).encode('utf-8'))
+
+
+def get_root_filename(filename):
+    return os.path.expanduser(os.path.join('~', '.cardvault', filename))
+
+def get_ui_filename(filename):
+    return os.path.expanduser(os.path.join(os.path.dirname(__file__), 'gui', filename))
+
+
+def reload_image_cache(path):
+    cache = {}
+    if not os.path.isdir(path):
+        os.mkdir(path)
+    imagefiles = os.listdir(path)
+    for imagefile in imagefiles:
         try:
-            library_loaded = pickle.load(open(lib_path, 'rb'))
-            for id, card in library_loaded.items():
-                library[id] = card
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file(path + imagefile)
+            # Strip filename extension
+            imagename = os.path.splitext(imagefile)[0]
+            cache[imagename] = pixbuf
         except OSError as err:
-            show_message("Error", err.strerror)
-            logger.log(str(err), logger.LogLevel.Error)
-    else:
-        save_library()
-        logger.log("No Library file found, creating new one", logger.LogLevel.Warning)
+            log("Error loading image: " + str(err), LogLevel.Error)
+    return cache
 
 
-def load_tags():
-    tag_path = config.cache_path + "tags"
-    tags.clear()
-    if not os.path.isfile(tag_path):
-        save_library()
-        logger.log("No tags file found, creating new one", logger.LogLevel.Warning)
-    try:
-        tags_loaded = pickle.load(open(tag_path, 'rb'))
-        for tag, ids in tags_loaded.items():
-            tags[tag] = ids
-    except OSError as err:
-        show_message("Error", err.strerror)
-        logger.log(str(err), logger.LogLevel.Error)
+def reload_preconstructed_icons(path):
+    cache = {}
+    if not os.path.exists(path):
+        os.makedirs(path)
 
-
-def load_sets():
-    path = config.cache_path + "sets"
-    if not os.path.isfile(path):
-        # use mtgsdk api to retrieve al list of all sets
-        new_sets = network.net_load_sets()
-        if new_sets == "":
-            show_message("API Error", "Could not retrieve Set infos")
-            return
-        # Serialize the loaded data to a file
-        pickle.dump(new_sets, open(path, 'wb'))
-    # Deserialize set data from local file
-    sets = pickle.load(open(path, 'rb'))
-    # Sort the loaded sets based on the sets name
-    for set in sorted(sets, key=lambda x: x.name):
-        set_list.append(set)
-        set_dict[set.code] = set
-
-
-def reload_image_cache():
-    if not os.path.exists(config.image_cache_path):
-        os.makedirs(config.image_cache_path)
-
-    # return array of images
-    imageslist = os.listdir(config.image_cache_path)
-    imagecache.clear()
-    for image in imageslist:
-        try:
-            pixbuf = GdkPixbuf.Pixbuf.new_from_file(config.image_cache_path + image)
-            imagecache[image] = pixbuf
-        except OSError as err:
-            print("Error loading image: " + str(err))
-
-
-def reload_preconstructed_icons():
-    if not os.path.exists(config.icon_cache_path):
-        os.makedirs(config.icon_cache_path)
-
-    icon_list = os.listdir(config.icon_cache_path)
-    mana_icons_preconstructed.clear()
-    for icon in icon_list:
-        list = re.findall("{(.*?)}", str(icon))
+    iconfiles = os.listdir(path)
+    for file in iconfiles:
+        # Split filename into single icon names and remove extension
+        without_ext = file.split(".")[0]
+        list = without_ext.split("_")
+        # Compute size of the finished icon
         pic_width = len(list) * 105
         pic_height = 105
         try:
-            pixbuf = GdkPixbuf.Pixbuf.new_from_file(config.icon_cache_path + icon)
+            pixbuf = GdkPixbuf.Pixbuf.new_from_file(ICON_CACHE_PATH + file)
             pixbuf = pixbuf.scale_simple(pic_width / 5, pic_height / 5, GdkPixbuf.InterpType.HYPER)
-            mana_icons_preconstructed[icon] = pixbuf
+            # Set name for icon
+            iconname = "_".join(list)
+            cache[iconname] = pixbuf
         except OSError as err:
-            print("Error loading icon: " + str(err))
+            log("Error loading image: " + str(err), LogLevel.Error)
+    return cache
 
 
-# endregion
-
-
-def get_library(tag=None):
-    if tag is None or tag == "All":
-        return library
-    else:
-        lib = {}
-        for card_id in tags[tag]:
-            lib[card_id] = library[card_id]
-        return lib
-
-
-def get_untagged_cards():
-    lib = copy.copy(library)
-    for ids in tags.values():
-        for card_id in ids:
-            try:
-                del lib[card_id]
-            except KeyError:
-                pass
-    return lib
-
-
-def tag_card(card, tag):
-    list = tags[tag]
-    list.append(card.multiverse_id)
-    global unsaved_changes
-    unsaved_changes = True
-
-
-def add_tag(tag):
-    tags[tag] = []
-    app.push_status("Added Tag \"" + tag + "\"")
-    global unsaved_changes
-    unsaved_changes = True
-
-
-def remove_tag(tag):
-    del tags[tag]
-    app.push_status("Removed Tag \"" + tag + "\"")
-    global unsaved_changes
-    unsaved_changes = True
-
-
-def add_card_to_lib(card, tag=None):
-    if tag is not None:
-        tag_card(card, tag)
-    library[card.multiverse_id] = card
-    app.push_status(card.name + " added to library")
-    global unsaved_changes
-    unsaved_changes = True
-
-
-def remove_card_from_lib(card):
-    del library[card.multiverse_id]
-    app.push_status(card.name + " removed from library")
-    global unsaved_changes
-    unsaved_changes = True
-
-
-def show_question_dialog(title, message):
-    dialog = Gtk.MessageDialog(app.ui.get_object("mainWindow"), 0, Gtk.MessageType.WARNING,
-                               Gtk.ButtonsType.YES_NO, title)
-    dialog.format_secondary_text(message)
-    response = dialog.run()
-    dialog.destroy()
-    return response
-
-
-def show_message(title, message):
-    dialog = Gtk.MessageDialog(app.ui.get_object("mainWindow"), 0, Gtk.MessageType.INFO,
-                               Gtk.ButtonsType.OK, title)
-    dialog.format_secondary_text(message)
-    dialog.run()
-    dialog.destroy()
-
-
-def load_mana_icons():
-    path = os.path.dirname(__file__) + "/resources/mana/"
+def load_mana_icons(path):
     if not os.path.exists(path):
-        print("ERROR: Directory for mana icons not found")
+        log("Directory for mana icons not found " + path, LogLevel.Error)
         return
-    # return array of icons
-    imagelist = os.listdir(path)
-    manaicons.clear()
-    for image in imagelist:
-        img = PImage.open(path + image)
-        manaicons[os.path.splitext(image)[0]] = img
+    icons = {}
+    filenames = os.listdir(path)
+    for file in filenames:
+        img = PImage.open(path + file)
+        # Strip file extension
+        name = os.path.splitext(file)[0]
+        icons[name] = img
+    return icons
+
+
+def load_sets(filename):
+    if not os.path.isfile(filename):
+        # use mtgsdk api to retrieve al list of all sets
+        try:
+            sets = Set.all()
+        except MtgException as err:
+            log(str(err), LogLevel.Error)
+            return
+        # Serialize the loaded data to a file
+        pickle.dump(sets, open(filename, 'wb'))
+    # Deserialize set data from local file
+    sets = pickle.load(open(filename, 'rb'))
+    # Sort the loaded sets based on the sets name
+    output = {}
+    for set in sorted(sets, key=lambda x: x.name):
+        output[set.code] = set
+    return output
+
+
+def export_library(path, file):
+    try:
+        pickle.dump(file, open(path, 'wb'))
+        log("Library exported to \"" + path + "\"", LogLevel.Info)
+    except OSError as err:
+        log(str(err), LogLevel.Error)
+
+
+def import_library(path):
+    try:
+        imported = pickle.load(open(path, 'rb'))
+    except pickle.UnpicklingError as err:
+        log(str(err) + " while importing", LogLevel.Error)
+        return
+    # Parse imported file
+    try:
+        library = imported["library"]
+        tags = imported["tags"]
+    except KeyError as err:
+        log("Invalid library format " + str(err), LogLevel.Error)
+        return
+
+    log("Library imported", LogLevel.Info)
+    return (library, tags)
+
+
+def save_file(path, file):
+    if not os.path.exists(path):
+        os.makedirs(path)
+    # Serialize using cPickle
+    try:
+        pickle.dump(file, open(path, 'wb'))
+    except OSError as err:
+        log(str(err), LogLevel.Error)
+        return
+    log("Saved file " + path, LogLevel.Info)
+
+
+def load_file(path):
+    if not os.path.isfile(path):
+        log(path + " does not exist", LogLevel.Error)
+    try:
+        loaded = pickle.load(open(path, 'rb'))
+    except OSError as err:
+        log(str(err), LogLevel.Error)
+        return
+    return loaded
 
 
 def load_dummy_image(sizex, sizey):
@@ -320,38 +244,17 @@ def load_dummy_image(sizex, sizey):
 def load_card_image_online(card, sizex, sizey):
     url = card.image_url
     if url is None:
-        print("No Image URL provided")
+        log("No Image URL for " + card.name, LogLevel.Warning)
         return load_dummy_image(sizex, sizey)
-    filename = config.image_cache_path + card.multiverse_id.__str__() + ".PNG"
+    filename = IMAGE_CACHE_PATH + str(card.multiverse_id) + ".png"
     request.urlretrieve(url, filename)
-    reload_image_cache()
     return GdkPixbuf.Pixbuf.new_from_file_at_size(filename, sizex, sizey)
 
 
-def load_card_image(card, sizex, sizey):
-    # Try loading from disk, if file exists
-    filename = str(card.multiverse_id) + ".PNG"
-    if imagecache.__contains__(filename):
-        pixbuf = imagecache[filename]
-        return pixbuf.scale_simple(sizex, sizey, GdkPixbuf.InterpType.BILINEAR)
-    else:
-        return load_card_image_online(card, sizex, sizey)
-
-
-def get_mana_icons(mana_string):
-    if not mana_string:
-        return
-    try:
-        icon = mana_icons_preconstructed[mana_string.replace("/", "") + ".png"]
-    except KeyError:
-        icon = create_mana_icons(mana_string)
-        mana_icons_preconstructed[mana_string] = icon
-    return icon
-
-
-def create_mana_icons(mana_string):
+def create_mana_icons(icon_dict, mana_string):
     # Convert the string to a List
-    list = re.findall("{(.*?)}", str(mana_string))
+    safe_string = mana_string.replace("/", "-")
+    list = re.findall("{(.*?)}", safe_string)
     if len(list) == 0:
         return
     # Compute horizontal size for the final image
@@ -362,18 +265,22 @@ def create_mana_icons(mana_string):
     # Go through all entries an add the correspondent icon to the final image
     for icon in list:
         xpos = poscounter * 105
-        loaded = manaicons.get(icon.replace("/", ""))
-        if loaded is None:
-            print("ERROR: No icon file named \"" + icon + "\" found.")
-        else:
-            image.paste(loaded, (xpos, 0))
+        try:
+            loaded = icon_dict[icon]
+        except KeyError as err:
+            log("No icon file named '" + icon + "' found.", LogLevel.Warning)
+            return
+        image.paste(loaded, (xpos, 0))
         poscounter += 1
-    path = config.icon_cache_path + mana_string.replace("/", "") + ".png"
+    # Save Icon file
+    path = ICON_CACHE_PATH + "_".join(list) + ".png"
     image.save(path)
     try:
         pixbuf = GdkPixbuf.Pixbuf.new_from_file(path)
         pixbuf = pixbuf.scale_simple(image.width / 5, image.height / 5, GdkPixbuf.InterpType.HYPER)
     except:
         return
-    mana_icons_preconstructed[mana_string.replace("/", "") + ".png"] = pixbuf
     return pixbuf
+
+# endregion
+

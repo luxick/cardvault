@@ -1,10 +1,13 @@
 import gi
-import config
-import lib_funct
-import search_funct
-import util
+import datetime
+import os
 from gi.repository import Gtk
+
 gi.require_version('Gtk', '3.0')
+
+from cardvault import lib_funct
+from cardvault import search_funct
+from cardvault import util
 
 
 class Handlers:
@@ -14,14 +17,44 @@ class Handlers:
     # ----------------Main Window-----------------
 
     def do_save_library(self, item):
-        util.save_library()
+        self.app.save_library()
 
     def do_export_library(self, item):
-        util.export_library()
+        dialog = Gtk.FileChooserDialog("Export Library", self.app.ui.get_object("mainWindow"),
+                                       Gtk.FileChooserAction.SAVE,
+                                       (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                                        Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+        dialog.set_current_name("mtg_export-" + datetime.datetime.now().strftime("%Y-%m-%d"))
+        dialog.set_current_folder(os.path.expanduser("~"))
+        response = dialog.run()
+
+        if response == Gtk.ResponseType.OK:
+            # prepare export file
+            file = {"library": self.app.library, "tags": self.app.tags}
+            util.export_library(dialog.get_filename, file)
+
+        dialog.destroy()
 
     def do_import_library(self, item):
-        util.import_library()
-        self.app.current_page.emit('show')
+        # Show file picker dialog for import
+        dialog = Gtk.FileChooserDialog("Import Library", self.app.ui.get_object("mainWindow"),
+                                       Gtk.FileChooserAction.OPEN,
+                                       (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                                        Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+        dialog.set_current_folder(os.path.expanduser("~"))
+        response = dialog.run()
+        if response == Gtk.ResponseType.OK:
+            # Show confirmation message
+            override_question = self.app.show_question_dialog("Import Library",
+                                                              "Importing a library will override your current library. "
+                                                              "Proceed?")
+            if override_question == Gtk.ResponseType.YES:
+                (library, tags) = util.import_library(dialog.get_filename())
+                self.app.library = library
+                self.app.tags = tags
+                # Cause current page to reload with imported data
+                self.app.current_page.emit('show')
+        dialog.destroy()
 
     def on_view_changed(self, item):
         if item.get_active():
@@ -34,22 +67,24 @@ class Handlers:
             container.show_all()
             self.app.current_page.emit('show')
 
-            app_title = new_page.get_name() + " - " + config.application_title
+            app_title = new_page.get_name() + " - " + util.APPLICATION_TITLE
             self.app.ui.get_object("mainWindow").set_title(app_title)
 
     def do_delete_event(self, arg1, arg2):
-        if util.unsaved_changes:
-            response = util.show_question_dialog("Unsaved Changes", "You have unsaved changes in your library. "
+        if self.app.unsaved_changes:
+            response = self.app.show_question_dialog("Unsaved Changes", "You have unsaved changes in your library. "
                                                                     "Save before exiting?")
             if response == Gtk.ResponseType.YES:
-                util.save_library()
+                self.app.save_library()
 
     # ----------------Search-----------------
 
     def do_search_cards(self, sender):
         search_term = self.app.ui.get_object("searchEntry").get_text()
 
-        results = search_funct.search_cards(search_term)
+        filters = search_funct.get_filters(self.app)
+
+        results = search_funct.search_cards(search_term, filters)
 
         card_list = self.app.ui.get_object("searchResults").get_child()
         card_list.update(results, colorize=True)
@@ -72,10 +107,10 @@ class Handlers:
             tree_iter = model.get_iter(path)
             card_id = model.get_value(tree_iter, 0)
             card = card_view.lib[card_id]
-            search_funct.add_to_library(card)
+            self.app.add_card_to_lib(card)
         search_funct.reload_serach_view(self.app)
 
-    #----------------Library-----------------
+    # ----------------Library-----------------
 
     def do_reload_library(self, view):
         lib_funct.reload_library(self.app)
@@ -103,11 +138,11 @@ class Handlers:
         selected_cards = card_view.get_selected_cards()
         tag = entry.get_text()
         if tag != "":
-            lib_funct.tag_cards(selected_cards, tag)
+            lib_funct.tag_cards(selected_cards, tag, self.app)
             lib_funct.reload_library(self.app, tag)
         entry.set_text("")
 
-    def on_drag_data_received(self, widget, drag_context, x,y, data,info, time):
+    def on_drag_data_received(self, widget, drag_context, x, y, data, info, time):
         print("drag received")
 
     def on_tag_selected(self, selection, path, column):
@@ -119,7 +154,7 @@ class Handlers:
 
     # Handlers for TreeViews etc. wich have been not added by Glade
 
-    #----------------Search-----------------
+    # ----------------Search-----------------
 
     def on_search_card_selected(self, tree, row_no, column):
         (model, path_list) = tree.get_selection().get_selected_rows()
@@ -150,5 +185,3 @@ class Handlers:
             card_list = self.app.ui.get_object("libraryContainer").get_child()
             card = card_list.lib[card_id]
             self.app.show_card_details(card)
-
-

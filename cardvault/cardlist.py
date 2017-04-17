@@ -1,6 +1,5 @@
 import gi
-import util
-import logger
+from cardvault import util
 from gi.repository import Gtk, GdkPixbuf, Gdk
 import time
 gi.require_version('Gtk', '3.0')
@@ -8,7 +7,7 @@ gi.require_version('Gdk', '3.0')
 
 
 class CardList(Gtk.ScrolledWindow):
-    def __init__(self, with_filter):
+    def __init__(self, with_filter, app):
         Gtk.ScrolledWindow.__init__(self)
         self.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         self.set_hexpand(True)
@@ -16,6 +15,7 @@ class CardList(Gtk.ScrolledWindow):
 
         self.filtered = with_filter
         self.lib = {}
+        self.app = app
 
         # Columns are these:
         # 0 Multiverse ID
@@ -136,10 +136,15 @@ class CardList(Gtk.ScrolledWindow):
 
             if card.multiverse_id is not None:
 
-                if util.library.__contains__(card_id) and colorize:
+                if self.app.library.__contains__(card_id) and colorize:
                     color = util.card_view_colors["owned"]
                 else:
                     color = util.card_view_colors["unowned"]
+
+                if card.type == "Land":
+                    mana_cost = None
+                else:
+                    mana_cost = self.app.get_mana_icons(card.mana_cost)
 
                 item =[
                     card.multiverse_id,
@@ -150,13 +155,13 @@ class CardList(Gtk.ScrolledWindow):
                     card.power,
                     card.toughness,
                     ", ".join(card.printings),
-                    util.get_mana_icons(card.mana_cost),
+                    mana_cost,
                     card.cmc,
                     card.set_name,
                     color]
                 self.store.append(item)
         end = time.time()
-        logger.log("Time to build Table: " + str(round(end - start, 3)), logger.LogLevel.Info)
+        util.log("Time to build Table: " + str(round(end - start, 3)), util.LogLevel.Info)
         if self.filtered:
             self.list.set_model(self.filter_and_sort)
             self.list.thaw_child_notify()
