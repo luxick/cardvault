@@ -173,6 +173,28 @@ class Application:
         dialog.run()
         dialog.destroy()
 
+    def show_tag_rename_dialog(self, tag):
+        def rename(button, entry):
+            self.rename_tag(tag, entry.get_text())
+            window.destroy()
+            self.current_page.emit('show')
+
+        def eval_key_pressed(widget,event):
+            key, modifier = Gtk.accelerator_parse('Escape')
+            keyval = event.keyval
+            if keyval == key:
+                window.destroy()
+
+        builder = Gtk.Builder()
+        builder.add_from_file(util.get_ui_filename("dialogs.glade"))
+        window = builder.get_object("renameWindow")
+        entry = builder.get_object("renameEntry")
+        entry.set_text(tag)
+        builder.get_object("renameButton").connect('clicked', rename, entry)
+        entry.connect('activate', rename, entry)
+        window.show_all()
+        window.connect("key-press-event", eval_key_pressed)
+
     def save_library(self):
         # Save library file
         util.save_file(util.get_root_filename("library"), self.library)
@@ -223,12 +245,20 @@ class Application:
 
     def add_tag(self, tag):
         self.tags[tag] = []
+        util.log("Tag '" + tag + "' added", util.LogLevel.Info)
         self.push_status("Added Tag \"" + tag + "\"")
         self.unsaved_changes = True
 
     def remove_tag(self, tag):
         del self.tags[tag]
+        util.log("Tag '" + tag + "' removed", util.LogLevel.Info)
         self.push_status("Removed Tag \"" + tag + "\"")
+        self.unsaved_changes = True
+
+    def rename_tag(self, old, new):
+        self.tags[new] = self.tags[old]
+        del self.tags[old]
+        util.log("Tag '" + old + "' renamed to '" + new + "'", util.LogLevel.Info)
         self.unsaved_changes = True
 
     def add_card_to_lib(self, card, tag=None):

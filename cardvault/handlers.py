@@ -153,6 +153,30 @@ class Handlers:
             tag = model.get_value(tree_iter, 0)
             lib_funct.reload_library(self.app, tag)
 
+    def do_tag_tree_press_event(self, treeview, event):
+        if event.button == 3:  # right click
+            path = treeview.get_path_at_pos(int(event.x), int(event.y))
+            if path:
+                tree_iter = treeview.get_model().get_iter(path[0])
+                tag = treeview.get_model().get_value(tree_iter, 0)
+                self.app.ui.get_object("tagListPopup").popup(None, None, None, None, 0, event.time)
+
+    def do_tag_list_rename(self, tree):
+        (model, pathlist) = tree.get_selection().get_selected_rows()
+        for path in pathlist:
+            tree_iter = model.get_iter(path)
+            tag = model.get_value(tree_iter, 0)
+
+            self.app.show_tag_rename_dialog(tag)
+
+    def do_tag_list_delete(self, tree):
+        (model, pathlist) = tree.get_selection().get_selected_rows()
+        for path in pathlist:
+            tree_iter = model.get_iter(path)
+            tag = model.get_value(tree_iter, 0)
+            self.app.remove_tag(tag)
+            self.app.current_page.emit('show')
+
     # Handlers for TreeViews etc. wich have been not added by Glade
 
     # ----------------Search-----------------

@@ -110,6 +110,8 @@ class CardList(Gtk.ScrolledWindow):
         self.list.append_column(col_mana)
         self.list.append_column(col_cmc)
 
+        self.store.set_sort_column_id(1, Gtk.SortType.ASCENDING)
+
     def get_selected_cards(self):
         (model, pathlist) = self.selection.get_selected_rows()
         output = {}
@@ -122,46 +124,45 @@ class CardList(Gtk.ScrolledWindow):
 
     def update(self, library, colorize=False):
         self.store.clear()
-
         if library is None:
             return
         self.lib = library
-
         if self.filtered:
             self.list.freeze_child_notify()
             self.list.set_model(None)
+
+        util.log("Updating tree view", util.LogLevel.Info)
 
         start = time.time()
         for card_id, card in library.items():
 
             if card.multiverse_id is not None:
-
                 if self.app.library.__contains__(card_id) and colorize:
                     color = util.card_view_colors["owned"]
                 else:
                     color = util.card_view_colors["unowned"]
-
                 if card.type == "Land":
                     mana_cost = None
                 else:
                     mana_cost = self.app.get_mana_icons(card.mana_cost)
-
-                item =[
-                    card.multiverse_id,
-                    card.name,
-                    " ".join(card.supertypes if card.supertypes else ""),
-                    " ".join(card.types),
-                    card.rarity,
-                    card.power,
-                    card.toughness,
-                    ", ".join(card.printings),
-                    mana_cost,
-                    card.cmc,
-                    card.set_name,
-                    color]
+                item = [card.multiverse_id,
+                        card.name,
+                        " ".join(card.supertypes if card.supertypes else ""),
+                        " ".join(card.types),
+                        card.rarity,
+                        card.power,
+                        card.toughness,
+                        ", ".join(card.printings),
+                        mana_cost,
+                        card.cmc,
+                        card.set_name,
+                        color]
                 self.store.append(item)
         end = time.time()
-        util.log("Time to build Table: " + str(round(end - start, 3)), util.LogLevel.Info)
+
+        util.log("Time to build Table: " + str(round(end - start, 3)) + "s", util.LogLevel.Info)
+        util.log("Total entries: " + str(len(self.lib)), util.LogLevel.Info)
+
         if self.filtered:
             self.list.set_model(self.filter_and_sort)
             self.list.thaw_child_notify()

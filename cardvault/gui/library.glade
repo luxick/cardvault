@@ -2,6 +2,28 @@
 <!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
+  <object class="GtkMenu" id="tagListPopup">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="tagRename">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Rename</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_tag_list_rename" object="tagTree" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="tagDelete">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Delete</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_tag_list_delete" object="tagTree" swapped="no"/>
+      </object>
+    </child>
+  </object>
   <object class="GtkListStore" id="tagStore">
     <columns>
       <!-- column-name tag -->
@@ -13,6 +35,7 @@
   <object class="GtkEntryCompletion" id="tagCompleter">
     <property name="model">tagStore</property>
     <property name="text_column">0</property>
+    <property name="inline_selection">True</property>
     <child>
       <object class="GtkCellRendererText"/>
       <attributes>
@@ -45,7 +68,7 @@
                 <property name="vexpand">True</property>
                 <property name="model">tagStore</property>
                 <property name="search_column">1</property>
-                <property name="activate_on_single_click">True</property>
+                <signal name="button-press-event" handler="do_tag_tree_press_event" swapped="no"/>
                 <signal name="drag-data-received" handler="on_drag_data_received" swapped="no"/>
                 <signal name="row-activated" handler="on_tag_selected" object="tagTreeSelection" swapped="no"/>
                 <child internal-child="selection">

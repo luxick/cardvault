@@ -1,5 +1,6 @@
 from cardvault import cardlist
 import gi
+from gi.repository import Gtk
 gi.require_version('Gtk', '3.0')
 
 
@@ -46,6 +47,7 @@ def reload_tag_list(app, preserve=False):
         store.append([tag, tag + " (" + str(len(ids)) + ")"])
     if preserve:
         tree.set_cursor(path if path else 0)
+    store.set_sort_column_id(1, Gtk.SortType.ASCENDING)
 
 
 def tag_cards(card_list, tag, app):
