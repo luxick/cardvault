@@ -49,9 +49,9 @@ class Handlers:
                                                               "Importing a library will override your current library. "
                                                               "Proceed?")
             if override_question == Gtk.ResponseType.YES:
-                (library, tags) = util.import_library(dialog.get_filename())
-                self.app.library = library
-                self.app.tags = tags
+                imports = util.import_library(dialog.get_filename())
+                self.app.library = imports[0]
+                self.app.tags = imports[1]
                 # Cause current page to reload with imported data
                 self.app.current_page.emit('show')
                 self.app.unsaved_changes = True

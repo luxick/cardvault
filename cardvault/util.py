@@ -209,7 +209,8 @@ def import_library(path):
         tags = imported["tags"]
     except KeyError as err:
         log("Invalid library format " + str(err), LogLevel.Error)
-        return
+        library = {}
+        tags = {}
 
     log("Library imported", LogLevel.Info)
     return (library, tags)

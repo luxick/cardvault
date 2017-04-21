@@ -12,8 +12,11 @@ setup(
     version=util.VERSION,
     packages=find_packages(),
 
-    # install_requires=['pygobject'],
     package_data={'cardvault': ['resources/images/*', 'resources/mana/*', 'gui/*']},
+
+    data_files=[
+    #('share/icons/hicolor/scalable/apps', ['data/mypackage.svg']),
+    ('share/applications', ['cardvault/resources/cardvault.desktop'])],
 
     author='luxick',
     author_email='cardvoult@luxick.de',
