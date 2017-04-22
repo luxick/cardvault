@@ -2,6 +2,30 @@
 <!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
+  <object class="GtkMenu" id="libListPopup">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <signal name="show" handler="lib_tree_popup_showed" swapped="no"/>
+    <child>
+      <object class="GtkMenuItem" id="untagItem">
+        <property name="visible">True</property>
+        <property name="sensitive">False</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Untag Card</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_popup_untag_cards" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="removeItem">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Remove from Library</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_popup_remove_card" swapped="no"/>
+      </object>
+    </child>
+  </object>
   <object class="GtkMenu" id="tagListPopup">
     <property name="visible">True</property>
     <property name="can_focus">False</property>

@@ -34,6 +34,7 @@ class Application:
 
         self.current_page = None
         self.unsaved_changes = False
+        self.current_lib_tag = "All"
 
         not_found = self.ui.get_object("pageNotFound")
         self.pages = {
@@ -243,6 +244,11 @@ class Application:
         list.append(card.multiverse_id)
         self.unsaved_changes = True
 
+    def untag_card(self, card, tag):
+        list = self.tags[tag]
+        list.remove(card.multiverse_id)
+        self.unsaved_changes = True
+
     def add_tag(self, tag):
         self.tags[tag] = []
         util.log("Tag '" + tag + "' added", util.LogLevel.Info)
@@ -269,6 +275,11 @@ class Application:
         self.unsaved_changes = True
 
     def remove_card_from_lib(self, card):
+        # Check if card is tagged
+        for card_ids in self.tags.values():
+            if card_ids.__contains__(card.multiverse_id):
+                card_ids.remove(card.multiverse_id)
+
         del self.library[card.multiverse_id]
         self.push_status(card.name + " removed from library")
         self.unsaved_changes = True

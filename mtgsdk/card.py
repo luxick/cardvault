@@ -54,6 +54,7 @@ class Card(object):
         self.rulings = response_dict.get('rulings')
         self.foreign_names = response_dict.get('foreignNames')
         self.owned = None
+        self.tags = []
 
     @staticmethod
     def find(id):

@@ -9,7 +9,10 @@ def init_library_view(app):
     container = app.ui.get_object("libraryContainer")
     card_list = cardlist.CardList(True, app)
     card_list.set_name("libScroller")
+    # Show details
     card_list.list.connect("row-activated", app.handlers.on_library_card_selected)
+    # Show Context menu
+    card_list.list.connect("button-press-event", app.handlers.on_library_tree_press_event)
     card_list.filter.set_visible_func(app.filter_lib_func)
     container.add(card_list)
     container.add_overlay(app.ui.get_object("noResults"))
@@ -19,7 +22,7 @@ def init_library_view(app):
 
 
 def reload_library(app, tag=None):
-    if tag == "untagged":
+    if tag == "Untagged":
         lib = app.get_untagged_cards()
         tag = None
     else:

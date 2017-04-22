@@ -14,7 +14,7 @@ class Handlers:
     def __init__(self, app):
         self.app = app
 
-    # ----------------Main Window-----------------
+        # ---------------------------------Main Window----------------------------------------------
 
     def do_save_library(self, item):
         self.app.save_library()
@@ -78,7 +78,7 @@ class Handlers:
             if response == Gtk.ResponseType.YES:
                 self.app.save_library()
 
-    # ----------------Search-----------------
+                # ---------------------------------Search----------------------------------------------
 
     def do_search_cards(self, sender):
         search_term = self.app.ui.get_object("searchEntry").get_text()
@@ -111,7 +111,7 @@ class Handlers:
             self.app.add_card_to_lib(card)
         search_funct.reload_serach_view(self.app)
 
-    # ----------------Library-----------------
+        # ---------------------------------Library----------------------------------------------
 
     def do_reload_library(self, view):
         lib_funct.reload_library(self.app)
@@ -127,12 +127,14 @@ class Handlers:
     def do_show_all_clicked(self, button):
         # Clear selection in tag list
         self.app.ui.get_object("tagTree").get_selection().unselect_all()
+        self.app.current_lib_tag = "All"
         lib_funct.reload_library(self.app)
 
     def do_show_untagged_clicked(self, button):
         # Clear selection in tag list
         self.app.ui.get_object("tagTree").get_selection().unselect_all()
-        lib_funct.reload_library(self.app, "untagged")
+        self.app.current_lib_tag = "Untagged"
+        lib_funct.reload_library(self.app, "Untagged")
 
     def do_tag_cards(self, entry):
         card_view = self.app.ui.get_object("libraryContainer").get_child()
@@ -151,6 +153,7 @@ class Handlers:
         for path in pathlist:
             tree_iter = model.get_iter(path)
             tag = model.get_value(tree_iter, 0)
+            self.app.current_lib_tag = tag
             lib_funct.reload_library(self.app, tag)
 
     def do_tag_tree_press_event(self, treeview, event):
@@ -181,9 +184,47 @@ class Handlers:
         # Access Card View inside of container
         container.get_child().filter.refilter()
 
+    def lib_tree_popup_showed(self, menu):
+        # Get selected cards
+        card_list = self.app.ui.get_object("libraryContainer").get_child()
+        cards = card_list.get_selected_cards()
+
+        # Check if a tag is selected
+        current_tag = self.app.current_lib_tag
+        if current_tag == "All" or current_tag == "Untagged":
+            return
+
+        # Check if selected Cards are tagged
+        for id_list in self.app.tags.values():
+            for card_id in cards.keys():
+                if id_list.__contains__(card_id):
+                    # Enable untag menu item
+                    self.app.ui.get_object("untagItem").set_sensitive(True)
+                    return
+
+    def do_popup_untag_cards(self, item):
+        # Get selected cards
+        card_list = self.app.ui.get_object("libraryContainer").get_child()
+        cards = card_list.get_selected_cards()
+        tag = self.app.current_lib_tag
+        for card in cards.values():
+            self.app.untag_card(card, tag)
+        lib_funct.reload_library(self.app, tag)
+        lib_funct.reload_tag_list(self.app, preserve=True)
+
+    def do_popup_remove_card(self, item):
+        # Get selected cards
+        card_list = self.app.ui.get_object("libraryContainer").get_child()
+        cards = card_list.get_selected_cards()
+        # Remove selected cards
+        for card in cards.values():
+            self.app.remove_card_from_lib(card)
+        lib_funct.reload_library(self.app, self.app.current_lib_tag)
+        lib_funct.reload_tag_list(self.app, preserve=True)
+
     # Handlers for TreeViews etc. wich have been not added by Glade
 
-    # ----------------Search-----------------
+    # ---------------------------------Search Tree----------------------------------------------
 
     def on_search_card_selected(self, tree, row_no, column):
         (model, path_list) = tree.get_selection().get_selected_rows()
@@ -204,7 +245,7 @@ class Handlers:
         else:
             add_remove_button.set_sensitive(False)
 
-    # ----------------Library-----------------
+    # ---------------------------------Library Tree----------------------------------------------
 
     def on_library_card_selected(self, tree, row_no, column):
         (model, path_list) = tree.get_selection().get_selected_rows()
@@ -214,3 +255,11 @@ class Handlers:
             card_list = self.app.ui.get_object("libraryContainer").get_child()
             card = card_list.lib[card_id]
             self.app.show_card_details(card)
+
+    def on_library_tree_press_event(self, treeview, event):
+        if event.button == 3:  # right click
+            path = treeview.get_path_at_pos(int(event.x), int(event.y))
+            if path:
+                tree_iter = treeview.get_model().get_iter(path[0])
+                self.app.ui.get_object("libListPopup").emit('show')
+                self.app.ui.get_object("libListPopup").popup(None, None, None, None, 0, event.time)
