@@ -13,8 +13,7 @@ from cardvault import application
 
 
 class Handlers:
-    def __init__(self, app):
-        self.app = Type[application.Application]
+    def __init__(self, app: 'application.Application'):
         self.app = app
 
     # ---------------------------------Main Window----------------------------------------------
@@ -115,6 +114,29 @@ class Handlers:
         search_funct.reload_serach_view(self.app)
         self.app.ui.get_object("searchEntry").grab_focus()
 
+    def search_tree_popup_showed(self, menu):
+        # Create wants Submenu
+        wants_item = self.app.ui.get_object("searchListPopupTags")
+        wants_sub = Gtk.Menu()
+        wants_item.set_submenu(wants_sub)
+
+        for list_name in self.app.wants.keys():
+            item = Gtk.MenuItem()
+            wants_sub.add(item)
+            item.set_label(list_name)
+            item.connect('activate', self.search_popup_add_wants)
+
+        wants_item.show_all()
+
+    def search_popup_add_wants(self, item):
+        # Get selected cards
+        card_list = self.app.ui.get_object("searchResults").get_child()
+        cards = card_list.get_selected_cards()
+        for card in cards.values():
+            self.app.add_card_to_want_list(item.get_label(), card)
+        search_funct.reload_serach_view(self.app)
+        self.app.push_status("Added " + str(len(cards)) + " card(s) to Want List '" + item.get_label() + "'")
+
     # ---------------------------------Library----------------------------------------------
 
     def do_reload_library(self, view):
@@ -148,9 +170,6 @@ class Handlers:
             lib_funct.tag_cards(selected_cards, tag, self.app)
             lib_funct.reload_library(self.app, tag)
         entry.set_text("")
-
-    def on_drag_data_received(self, widget, drag_context, x, y, data, info, time):
-        print("drag received")
 
     def on_tag_selected(self, selection, path, column):
         (model, pathlist) = selection.get_selected_rows()
@@ -261,6 +280,15 @@ class Handlers:
             add_remove_button.set_sensitive(True)
         else:
             add_remove_button.set_sensitive(False)
+
+    def on_search_tree_press_event(self, treeview, event):
+        if event.button == 3:  # right click
+            path = treeview.get_path_at_pos(int(event.x), int(event.y))
+            if path:
+                tree_iter = treeview.get_model().get_iter(path[0])
+                self.app.ui.get_object("searchListPopup").emit('show')
+                self.app.ui.get_object("searchListPopup").popup(None, None, None, None, 0, event.time)
+            return True
 
     # ---------------------------------Library Tree----------------------------------------------
 

@@ -5,12 +5,13 @@ from gi.repository import Gtk, Gdk
 
 from cardvault import cardlist
 from cardvault import util
+from cardvault import application
 from mtgsdk import Card
 
 gi.require_version('Gtk', '3.0')
 
 
-def init_search_view(app):
+def init_search_view(app: 'application.Application'):
     # set mana icons on filter buttons
     buttons = [x for x in app.ui.get_object("manaFilterGrid").get_children()
                if isinstance(x, Gtk.ToggleButton)]
@@ -24,16 +25,14 @@ def init_search_view(app):
     # Create Model for search results
     _init_results_tree(app)
 
-    app.ui.get_object("tagTree").drag_dest_set(Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY)
 
-
-def reload_serach_view(app):
+def reload_serach_view(app: 'application.Application'):
     results_tree = app.ui.get_object("searchResults").get_child()
     cards = results_tree.lib
     results_tree.update(cards, True)
 
 
-def get_filters(app):
+def get_filters(app: 'application.Application') -> dict:
     output = {}
     # Mana colors
     color_list = []
@@ -58,7 +57,7 @@ def get_filters(app):
     return output
 
 
-def search_cards(term, filters):
+def search_cards(term: str, filters: dict) -> dict:
     util.log("Starting online search for '" + term + "'", util.LogLevel.Info)
     util.log("Used Filters: " + str(filters), util.LogLevel.Info)
 
@@ -72,12 +71,15 @@ def search_cards(term, filters):
             .where(pageSize=50) \
             .where(page=1).all()
     except (URLError, HTTPError) as err:
-        print("Error connecting to the internet")
+        util.log(err, util.LogLevel.Error)
         return
 
+    # Check if results were found
     if len(cards) == 0:
         # TODO UI show no cards found
+        util.log("No Cards found", util.LogLevel.Info)
         return
+
     util.log("Found " + str(len(cards)) + " cards", util.LogLevel.Info)
     # Remove duplicate entries
     if util.SHOW_FROM_ALL_SETS is False:
@@ -90,7 +92,7 @@ def search_cards(term, filters):
     return lib
 
 
-def _init_results_tree(app):
+def _init_results_tree(app: 'application.Application'):
     overlay = app.ui.get_object("searchResults")
     card_list = cardlist.CardList(False, app)
     card_list.set_name("resultsScroller")
@@ -98,10 +100,13 @@ def _init_results_tree(app):
     card_list.selection.connect("changed", app.handlers.on_search_selection_changed)
     overlay.add(card_list)
     overlay.add_overlay(app.ui.get_object("searchOverlay"))
-    overlay.show_all()    
+    overlay.show_all()
+
+    # Connect signal for context menu
+    card_list.list.connect("button-press-event", app.handlers.on_search_tree_press_event)
 
 
-def _init_combo_box(combo, list):
+def _init_combo_box(combo, list: list):
     model = Gtk.ListStore(str)
     model.append(["All"])
     for entry in list:
@@ -113,7 +118,7 @@ def _init_combo_box(combo, list):
     combo.set_active(0)
 
 
-def _remove_duplicates(cards):
+def _remove_duplicates(cards: list) -> list:
     unique_cards = []
     unique_names = []
     # Reverse cardlist so we get the version with the most modern art
@@ -124,7 +129,7 @@ def _remove_duplicates(cards):
     return unique_cards
 
 
-def _get_combo_value(combo):
+def _get_combo_value(combo) -> str:
     tree_iter = combo.get_active_iter()
     value = combo.get_model().get_value(tree_iter, 0)
     return value.replace("All", "")
@@ -136,7 +141,7 @@ def _init_mana_buttons(app, button_list):
         button.set_image(image)
 
 
-def _init_set_entry(app, entry):
+def _init_set_entry(app: 'application.Application', entry):
     set_store = Gtk.ListStore(str, str)
     for set in app.sets.values():
         set_store.append([set.name, set.code])

@@ -13,12 +13,16 @@ except ImportError as ex:
 import os
 import copy
 import re
+import mtgsdk
+from typing import Type, Dict, List
 
 from cardvault import handlers
 from cardvault import util
 from cardvault import search_funct
 from cardvault import lib_funct
 from cardvault import wants_funct
+
+
 
 
 class Application:
@@ -57,15 +61,15 @@ class Application:
 
         self.sets = util.load_sets(util.get_root_filename("sets"))
 
-        self.library = None
-        self.tags = None
-        self.wants = None
+        self.library = Dict[str, Type[mtgsdk.Card]]
+        self.tags = Dict[str, str]
+        self.wants = Dict[str, List[Type[mtgsdk.Card]]]
         self.load_library()
 
         self.handlers = handlers.Handlers(self)
         self.ui.connect_signals(self.handlers)
 
-        # Inizialize the views
+        # Initialize the views
 
         search_funct.init_search_view(self)
 
@@ -207,6 +211,8 @@ class Application:
         util.save_file(util.get_root_filename("library"), self.library)
         # Save tags file
         util.save_file(util.get_root_filename("tags"), self.tags)
+        # Save wants file
+        util.save_file(util.get_root_filename("wants"), self.wants)
         self.unsaved_changes = False
         self.push_status("Library saved")
 
@@ -283,10 +289,22 @@ class Application:
         util.log("Tag '" + old + "' renamed to '" + new + "'", util.LogLevel.Info)
         self.unsaved_changes = True
 
+    def get_wanted_card_ids(self) -> List[str]:
+        all_ids = []
+        for cards in self.wants.values():
+            next_ids = [card.multiverse_id for card in cards]
+            all_ids = list(set(all_ids) | set(next_ids))
+        return all_ids
+
     def add_want_list(self, name):
-        self.wants[name] = {}
+        self.wants[name] = []
         util.log("Want list  '" + name + "' created", util.LogLevel.Info)
         self.push_status("Created want list '" + name + "'")
+        self.unsaved_changes = True
+
+    def add_card_to_want_list(self, list_name, card):
+        self.wants[list_name].append(card)
+        util.log(card.name + " added to want list " + list_name, util.LogLevel.Info)
         self.unsaved_changes = True
 
     def add_card_to_lib(self, card, tag=None):

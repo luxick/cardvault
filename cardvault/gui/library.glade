@@ -100,7 +100,6 @@
                 <property name="model">tagStore</property>
                 <property name="search_column">1</property>
                 <signal name="button-press-event" handler="do_tag_tree_press_event" swapped="no"/>
-                <signal name="drag-data-received" handler="on_drag_data_received" swapped="no"/>
                 <signal name="row-activated" handler="on_tag_selected" object="tagTreeSelection" swapped="no"/>
                 <child internal-child="selection">
                   <object class="GtkTreeSelection" id="tagTreeSelection"/>

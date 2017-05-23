@@ -1,5 +1,6 @@
 import gi
 from cardvault import util
+from cardvault import application
 from gi.repository import Gtk, GdkPixbuf, Gdk
 import time
 gi.require_version('Gtk', '3.0')
@@ -7,7 +8,7 @@ gi.require_version('Gdk', '3.0')
 
 
 class CardList(Gtk.ScrolledWindow):
-    def __init__(self, with_filter, app):
+    def __init__(self, with_filter, app : 'application.Application'):
         Gtk.ScrolledWindow.__init__(self)
         self.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         self.set_hexpand(True)
@@ -134,11 +135,16 @@ class CardList(Gtk.ScrolledWindow):
         util.log("Updating tree view", util.LogLevel.Info)
 
         start = time.time()
-        for card_id, card in library.items():
 
+        all_wants = self.app.get_wanted_card_ids()
+
+        for card_id, card in library.items():
             if card.multiverse_id is not None:
+
                 if self.app.library.__contains__(card_id) and colorize:
                     color = util.card_view_colors["owned"]
+                elif all_wants.__contains__(card_id) and colorize:
+                    color = util.card_view_colors["wanted"]
                 else:
                     color = util.card_view_colors["unowned"]
                 if card.type == "Land":

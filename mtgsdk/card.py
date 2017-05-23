@@ -55,6 +55,7 @@ class Card(object):
         self.foreign_names = response_dict.get('foreignNames')
         self.owned = None
         self.tags = []
+        self.wanted = None
 
     @staticmethod
     def find(id):
