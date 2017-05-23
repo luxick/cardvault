@@ -1,7 +1,7 @@
 from cardvault import cardlist
 import gi
-from gi.repository import Gtk
 gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
 
 
 def init_library_view(app):
@@ -22,7 +22,7 @@ def init_library_view(app):
 
 
 def reload_library(app, tag=None):
-    if tag == "Untagged":
+    if tag == "Untagged" or tag == "All":
         lib = app.get_untagged_cards()
         tag = None
     else:

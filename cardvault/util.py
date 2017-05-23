@@ -6,13 +6,13 @@ import re
 from urllib import request
 
 import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import GdkPixbuf
 import six.moves.cPickle as pickle
 from PIL import Image as PImage
-from gi.repository import GdkPixbuf
-
-gi.require_version('Gtk', '3.0')
 
 from mtgsdk import Set
+from mtgsdk import Card
 from mtgsdk import MtgException
 
 # Title of the Program Window
@@ -72,13 +72,13 @@ class LogLevel(enum.Enum):
     Info = 3
 
 
-def log(message, log_level):
+def log(message: str, log_level: LogLevel):
     if log_level.value <= LOG_LEVEL:
         level_string = "[" + log_level.name + "] "
         print(level_string + message)
 
 
-def parse_config(filename, default):
+def parse_config(filename: str, default: dict):
     config = copy.copy(default)
     try:
         with open(filename) as configfile:
@@ -99,24 +99,25 @@ def parse_config(filename, default):
     return config
 
 
-def save_config(config_dict, filename):
+def save_config(config: dict, filename: str):
     path = os.path.dirname(filename)
     if not os.path.isdir(path):
         os.mkdir(path)
 
     with open(filename, 'wb') as configfile:
-        configfile.write(json.dumps(config_dict, sort_keys=True,
-                  indent=4, separators=(',', ': ')).encode('utf-8'))
+        configfile.write(json.dumps(config, sort_keys=True,
+                                    indent=4, separators=(',', ': ')).encode('utf-8'))
 
 
-def get_root_filename(filename):
+def get_root_filename(filename: str) -> str:
     return os.path.expanduser(os.path.join('~', '.cardvault', filename))
 
-def get_ui_filename(filename):
+
+def get_ui_filename(filename: str) -> str:
     return os.path.expanduser(os.path.join(os.path.dirname(__file__), 'gui', filename))
 
 
-def reload_image_cache(path):
+def reload_image_cache(path: str) -> dict:
     cache = {}
     if not os.path.isdir(path):
         os.mkdir(path)
@@ -132,7 +133,7 @@ def reload_image_cache(path):
     return cache
 
 
-def reload_preconstructed_icons(path):
+def reload_preconstructed_icons(path: str) -> dict:
     cache = {}
     if not os.path.exists(path):
         os.makedirs(path)
@@ -156,10 +157,10 @@ def reload_preconstructed_icons(path):
     return cache
 
 
-def load_mana_icons(path):
+def load_mana_icons(path: str) -> dict:
     if not os.path.exists(path):
         log("Directory for mana icons not found " + path, LogLevel.Error)
-        return
+        return {}
     icons = {}
     filenames = os.listdir(path)
     for file in filenames:
@@ -170,14 +171,14 @@ def load_mana_icons(path):
     return icons
 
 
-def load_sets(filename):
+def load_sets(filename: str) -> dict:
     if not os.path.isfile(filename):
         # use mtgsdk api to retrieve al list of all sets
         try:
             sets = Set.all()
         except MtgException as err:
             log(str(err), LogLevel.Error)
-            return
+            return {}
         # Serialize the loaded data to a file
         pickle.dump(sets, open(filename, 'wb'))
     # Deserialize set data from local file
@@ -197,7 +198,7 @@ def export_library(path, file):
         log(str(err), LogLevel.Error)
 
 
-def import_library(path):
+def import_library(path: str) -> ():
     try:
         imported = pickle.load(open(path, 'rb'))
     except pickle.UnpicklingError as err:
@@ -213,7 +214,7 @@ def import_library(path):
         tags = {}
 
     log("Library imported", LogLevel.Info)
-    return (library, tags)
+    return library, tags
 
 
 def save_file(path, file):
@@ -226,7 +227,7 @@ def save_file(path, file):
     log("Saved file " + path, LogLevel.Info)
 
 
-def load_file(path):
+def load_file(path: str):
     if not os.path.isfile(path):
         log(path + " does not exist", LogLevel.Warning)
         return
@@ -238,22 +239,22 @@ def load_file(path):
     return loaded
 
 
-def load_dummy_image(sizex, sizey):
+def load_dummy_image(size_x: int, size_y: int) -> GdkPixbuf:
     return GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.dirname(__file__)
-                                                  + '/resources/images/dummy.jpg', sizex, sizey)
+                                                  + '/resources/images/dummy.jpg', size_x, size_y)
 
 
-def load_card_image_online(card, sizex, sizey):
+def load_card_image_online(card, size_x: int, size_y: int) -> GdkPixbuf:
     url = card.image_url
     if url is None:
         log("No Image URL for " + card.name, LogLevel.Warning)
-        return load_dummy_image(sizex, sizey)
+        return load_dummy_image(size_x, size_y)
     filename = IMAGE_CACHE_PATH + str(card.multiverse_id) + ".png"
     request.urlretrieve(url, filename)
-    return GdkPixbuf.Pixbuf.new_from_file_at_size(filename, sizex, sizey)
+    return GdkPixbuf.Pixbuf.new_from_file_at_size(filename, size_x, size_y)
 
 
-def create_mana_icons(icon_dict, mana_string):
+def create_mana_icons(icons: dict, mana_string: str) -> GdkPixbuf:
     # Convert the string to a List
     safe_string = mana_string.replace("/", "-")
     list = re.findall("{(.*?)}", safe_string)
@@ -262,13 +263,14 @@ def create_mana_icons(icon_dict, mana_string):
     # Compute horizontal size for the final image
     imagesize = len(list) * 105
     image = PImage.new("RGBA", (imagesize, 105))
-    # incerment for each position of an icon (Workaround: 2 or more of the same icon will be rendered in the same poisition)
+    # Increment for each position of an icon
+    # (Workaround: 2 or more of the same icon will be rendered in the same position)
     poscounter = 0
     # Go through all entries an add the correspondent icon to the final image
     for icon in list:
         xpos = poscounter * 105
         try:
-            loaded = icon_dict[icon]
+            loaded = icons[icon]
         except KeyError as err:
             log("No icon file named '" + icon + "' found.", LogLevel.Warning)
             return

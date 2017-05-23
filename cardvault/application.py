@@ -18,19 +18,19 @@ from cardvault import handlers
 from cardvault import util
 from cardvault import search_funct
 from cardvault import lib_funct
+from cardvault import wants_funct
 
 
 class Application:
-
     # ---------------------------------Initialize the Application----------------------------------------------
     def __init__(self):
-
         # Load ui files
         self.ui = Gtk.Builder()
         self.ui.add_from_file(util.get_ui_filename("mainwindow.glade"))
         self.ui.add_from_file(util.get_ui_filename("overlays.glade"))
         self.ui.add_from_file(util.get_ui_filename("search.glade"))
         self.ui.add_from_file(util.get_ui_filename("library.glade"))
+        self.ui.add_from_file(util.get_ui_filename("wants.glade"))
 
         self.current_page = None
         self.unsaved_changes = False
@@ -40,7 +40,8 @@ class Application:
         self.pages = {
             "search": self.ui.get_object("searchView"),
             "library": self.ui.get_object("libraryView"),
-            "decks": not_found
+            "decks": not_found,
+            "wants": self.ui.get_object("wantsView")
         }
 
         # Load configuration file
@@ -58,14 +59,19 @@ class Application:
 
         self.library = None
         self.tags = None
+        self.wants = None
         self.load_library()
 
         self.handlers = handlers.Handlers(self)
         self.ui.connect_signals(self.handlers)
 
+        # Inizialize the views
+
         search_funct.init_search_view(self)
 
         lib_funct.init_library_view(self)
+
+        wants_funct.init_wants_view(self)
 
         self.ui.get_object("mainWindow").connect('delete-event', Gtk.main_quit)
         self.ui.get_object("mainWindow").show_all()
@@ -206,16 +212,26 @@ class Application:
 
     def load_library(self):
         all_existing = True
+
         # Load library file
         self.library = util.load_file(util.get_root_filename("library"))
         if not self.library:
             all_existing = False
             self.library = {}
+
         # Load tags file
         self.tags = util.load_file(util.get_root_filename("tags"))
         if not self.tags:
             all_existing = False
             self.tags = {}
+
+        # Load wants lists
+        self.wants = util.load_file(util.get_root_filename("wants"))
+        if not self.wants:
+            all_existing = False
+            self.wants = {}
+
+        # If parts were missing save to create the files
         if not all_existing:
             self.save_library()
         self.push_status("Library loaded")
@@ -265,6 +281,12 @@ class Application:
         self.tags[new] = self.tags[old]
         del self.tags[old]
         util.log("Tag '" + old + "' renamed to '" + new + "'", util.LogLevel.Info)
+        self.unsaved_changes = True
+
+    def add_want_list(self, name):
+        self.wants[name] = {}
+        util.log("Want list  '" + name + "' created", util.LogLevel.Info)
+        self.push_status("Created want list '" + name + "'")
         self.unsaved_changes = True
 
     def add_card_to_lib(self, card, tag=None):

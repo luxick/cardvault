@@ -7,6 +7,14 @@
     <property name="can_focus">False</property>
     <signal name="show" handler="lib_tree_popup_showed" swapped="no"/>
     <child>
+      <object class="GtkMenuItem" id="tagItem">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Tag Card</property>
+        <property name="use_underline">True</property>
+      </object>
+    </child>
+    <child>
       <object class="GtkMenuItem" id="untagItem">
         <property name="visible">True</property>
         <property name="sensitive">False</property>

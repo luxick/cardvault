@@ -28,7 +28,9 @@ def init_search_view(app):
 
 
 def reload_serach_view(app):
-    pass
+    results_tree = app.ui.get_object("searchResults").get_child()
+    cards = results_tree.lib
+    results_tree.update(cards, True)
 
 
 def get_filters(app):

@@ -1,20 +1,23 @@
 import gi
+gi.require_version('Gtk', '3.0')
 import datetime
 import os
 from gi.repository import Gtk
-
-gi.require_version('Gtk', '3.0')
+from typing import Type
 
 from cardvault import lib_funct
 from cardvault import search_funct
+from cardvault import wants_funct
 from cardvault import util
+from cardvault import application
 
 
 class Handlers:
     def __init__(self, app):
+        self.app = Type[application.Application]
         self.app = app
 
-        # ---------------------------------Main Window----------------------------------------------
+    # ---------------------------------Main Window----------------------------------------------
 
     def do_save_library(self, item):
         self.app.save_library()
@@ -78,7 +81,7 @@ class Handlers:
             if response == Gtk.ResponseType.YES:
                 self.app.save_library()
 
-                # ---------------------------------Search----------------------------------------------
+    # ---------------------------------Search----------------------------------------------
 
     def do_search_cards(self, sender):
         search_term = self.app.ui.get_object("searchEntry").get_text()
@@ -110,8 +113,9 @@ class Handlers:
             card = card_view.lib[card_id]
             self.app.add_card_to_lib(card)
         search_funct.reload_serach_view(self.app)
+        self.app.ui.get_object("searchEntry").grab_focus()
 
-        # ---------------------------------Library----------------------------------------------
+    # ---------------------------------Library----------------------------------------------
 
     def do_reload_library(self, view):
         lib_funct.reload_library(self.app)
@@ -222,6 +226,19 @@ class Handlers:
         lib_funct.reload_library(self.app, self.app.current_lib_tag)
         lib_funct.reload_tag_list(self.app, preserve=True)
 
+    # ---------------------------------Wants----------------------------------------------
+
+    def do_reload_wants(self, view):
+        wants_funct.reload_wants_view(self.app)
+
+    def on_new_wants_list_clicked(self, entry):
+        name = entry.get_text()
+        # Check if list name already exists
+        if self.app.wants.__contains__(name):
+            return
+        self.app.add_want_list(name)
+        wants_funct.reload_wants_view(self.app)
+
     # Handlers for TreeViews etc. wich have been not added by Glade
 
     # ---------------------------------Search Tree----------------------------------------------
@@ -263,3 +280,10 @@ class Handlers:
                 tree_iter = treeview.get_model().get_iter(path[0])
                 self.app.ui.get_object("libListPopup").emit('show')
                 self.app.ui.get_object("libListPopup").popup(None, None, None, None, 0, event.time)
+            return True
+
+    # ---------------------------------Wants Tree----------------------------------------------
+
+    def on_wants_card_selected(self, tree, row, column):
+        # TODO
+        pass
