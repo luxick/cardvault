@@ -158,4 +158,28 @@
       </packing>
     </child>
   </object>
+  <object class="GtkMenu" id="wants_cardListPopup">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="wntCrdLst_add">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Add to Library</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_want_cards_add_activated" swapped="no"/>
+        <accelerator key="a" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="wntCrdLst_remove">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Remove Card</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_want_cards_remove_activated" swapped="no"/>
+        <accelerator key="Delete" signal="activate"/>
+      </object>
+    </child>
+  </object>
 </interface>

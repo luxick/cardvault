@@ -14,6 +14,7 @@ def init_wants_view(app: 'application.Application'):
     card_list.set_name("wantsScroller")
     # Show details
     card_list.list.connect("row-activated", app.handlers.on_wants_card_selected)
+    card_list.list.connect("button-press-event", app.handlers.on_wants_cards_press_event)
     # Add card list to container
     container.add(card_list)
     container.add_overlay(app.ui.get_object("wantsOverlay"))

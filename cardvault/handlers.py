@@ -265,7 +265,15 @@ class Handlers:
             list_name = model.get_value(tree_iter, 0)
             wants_funct.reload_wants_view(self.app, list_name)
 
-    # Handlers for TreeViews etc. wich have been not added by Glade
+    def on_want_cards_add_activated(self, menu_item):
+        # TODO
+        pass
+
+    def on_want_cards_remove_activated(self, menu_item):
+        # TODO
+        pass
+
+    # Handlers for TreeViews etc. which have been not added by Glade
 
     # ---------------------------------Search Tree----------------------------------------------
 
@@ -291,10 +299,16 @@ class Handlers:
     def on_search_tree_press_event(self, treeview, event):
         if event.button == 3:  # right click
             path = treeview.get_path_at_pos(int(event.x), int(event.y))
-            if path:
-                tree_iter = treeview.get_model().get_iter(path[0])
-                self.app.ui.get_object("searchListPopup").emit('show')
-                self.app.ui.get_object("searchListPopup").popup(None, None, None, None, 0, event.time)
+            # Get the selection
+            selection = treeview.get_selection()
+            # Get the selected path(s)
+            rows = selection.get_selected_rows()
+            # If not clicked on selection, change selected rows
+            if path[0] not in rows[1]:
+                selection.unselect_all()
+                selection.select_path(path[0])
+            self.app.ui.get_object("searchListPopup").emit('show')
+            self.app.ui.get_object("searchListPopup").popup(None, None, None, None, 0, event.time)
             return True
 
     # ---------------------------------Library Tree----------------------------------------------
@@ -311,10 +325,16 @@ class Handlers:
     def on_library_tree_press_event(self, treeview, event):
         if event.button == 3:  # right click
             path = treeview.get_path_at_pos(int(event.x), int(event.y))
-            if path:
-                tree_iter = treeview.get_model().get_iter(path[0])
-                self.app.ui.get_object("libListPopup").emit('show')
-                self.app.ui.get_object("libListPopup").popup(None, None, None, None, 0, event.time)
+            # Get the selection
+            selection = treeview.get_selection()
+            # Get the selected path(s)
+            rows = selection.get_selected_rows()
+            # If not clicked on selection, change selected rows
+            if path[0] not in rows[1]:
+                selection.unselect_all()
+                selection.select_path(path[0])
+            self.app.ui.get_object("libListPopup").emit('show')
+            self.app.ui.get_object("libListPopup").popup(None, None, None, None, 0, event.time)
             return True
 
     # ---------------------------------Wants Tree----------------------------------------------
@@ -327,3 +347,22 @@ class Handlers:
             card_list = self.app.ui.get_object("wantsListContainer").get_child()
             card = card_list.lib[card_id]
             self.app.show_card_details(card)
+
+    def on_wants_cards_press_event(self, treeview, event):
+        if event.button == 3:  # right click
+            path = treeview.get_path_at_pos(int(event.x), int(event.y))
+            # Get the selection
+            selection = treeview.get_selection()
+            # Get the selected path(s)
+            rows = selection.get_selected_rows()
+            # If not clicked on selection, change selected rows
+            if path[0] not in rows[1]:
+                selection.unselect_all()
+                selection.select_path(path[0])
+
+            # Show popup and emit 'show' to trigger update function of popup
+            self.app.ui.get_object("wants_cardListPopup").emit('show')
+            self.app.ui.get_object("wants_cardListPopup").popup(None, None, None, None, 0, event.time)
+            return True
+
+
