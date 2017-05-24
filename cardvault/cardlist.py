@@ -2,6 +2,10 @@ import gi
 from cardvault import util
 from cardvault import application
 from gi.repository import Gtk, GdkPixbuf, Gdk
+
+from typing import Dict, Type
+from mtgsdk import Card
+
 import time
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gdk', '3.0')
@@ -123,7 +127,7 @@ class CardList(Gtk.ScrolledWindow):
             output[card_id] = card
         return output
 
-    def update(self, library, colorize=False):
+    def update(self, library: Dict[str, Type[Card]], colorize=False):
         self.store.clear()
         if library is None:
             return

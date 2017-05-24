@@ -34,8 +34,9 @@
                 <property name="vexpand">True</property>
                 <property name="model">wantsListsStore</property>
                 <property name="search_column">0</property>
+                <signal name="row-activated" handler="on_want_list_selected" object="wantsTreeSelection" swapped="no"/>
                 <child internal-child="selection">
-                  <object class="GtkTreeSelection"/>
+                  <object class="GtkTreeSelection" id="wantsTreeSelection"/>
                 </child>
                 <child>
                   <object class="GtkTreeViewColumn" id="col_name">
@@ -109,8 +110,17 @@
           <object class="GtkBox" id="wantsToolBar">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
+            <property name="spacing">2</property>
             <child>
-              <placeholder/>
+              <object class="GtkLabel" id="wantsTileLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
             </child>
             <child>
               <placeholder/>

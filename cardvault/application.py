@@ -296,10 +296,15 @@ class Application:
             all_ids = list(set(all_ids) | set(next_ids))
         return all_ids
 
+    def get_wanted_cards(self, list_name: str = None) -> Dict[str, Type[mtgsdk.Card]]:
+        if list_name:
+            out = {card.multiverse_id: card for card in self.wants[list_name]}
+            return out
+
     def add_want_list(self, name):
         self.wants[name] = []
         util.log("Want list  '" + name + "' created", util.LogLevel.Info)
-        self.push_status("Created want list '" + name + "'")
+        self.push_status("Created want listwantsListContainer '" + name + "'")
         self.unsaved_changes = True
 
     def add_card_to_want_list(self, list_name, card):

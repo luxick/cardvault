@@ -258,6 +258,13 @@ class Handlers:
         self.app.add_want_list(name)
         wants_funct.reload_wants_view(self.app)
 
+    def on_want_list_selected(self, selection, path, column):
+        (model, pathlist) = selection.get_selected_rows()
+        for path in pathlist:
+            tree_iter = model.get_iter(path)
+            list_name = model.get_value(tree_iter, 0)
+            wants_funct.reload_wants_view(self.app, list_name)
+
     # Handlers for TreeViews etc. wich have been not added by Glade
 
     # ---------------------------------Search Tree----------------------------------------------
@@ -313,5 +320,10 @@ class Handlers:
     # ---------------------------------Wants Tree----------------------------------------------
 
     def on_wants_card_selected(self, tree, row, column):
-        # TODO
-        pass
+        (model, path_list) = tree.get_selection().get_selected_rows()
+        for path in path_list:
+            tree_iter = model.get_iter(path)
+            card_id = model.get_value(tree_iter, 0)
+            card_list = self.app.ui.get_object("wantsListContainer").get_child()
+            card = card_list.lib[card_id]
+            self.app.show_card_details(card)
