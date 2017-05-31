@@ -193,7 +193,10 @@ class Handlers:
             tree_iter = model.get_iter(path)
             tag = model.get_value(tree_iter, 0)
 
-            self.app.show_tag_rename_dialog(tag)
+            new_name = self.app.show_rename_dialog(tag)
+            self.app.rename_tag(tag, new_name)
+            self.app.current_page.emit('show')
+
 
     def do_tag_list_delete(self, tree):
         (model, pathlist) = tree.get_selection().get_selected_rows()
@@ -264,6 +267,29 @@ class Handlers:
             tree_iter = model.get_iter(path)
             list_name = model.get_value(tree_iter, 0)
             wants_funct.reload_wants_view(self.app, list_name)
+
+    def do_wants_tree_press_event(self, treeview, event):
+        if event.button == 3:  # right click
+            path = treeview.get_path_at_pos(int(event.x), int(event.y))
+            if path:
+                tree_iter = treeview.get_model().get_iter(path[0])
+                tag = treeview.get_model().get_value(tree_iter, 0)
+                self.app.ui.get_object("wants_wantsListPopup").popup(None, None, None, None, 0, event.time)
+            return True
+
+    def do_rename_wants_list(self, tree):
+        (model, pathlist) = tree.get_selection().get_selected_rows()
+        for path in pathlist:
+            tree_iter = model.get_iter(path)
+            tag = model.get_value(tree_iter, 0)
+
+            new_name = self.app.show_rename_dialog(tag)
+            self.app.rename_want_list(tag, new_name)
+            self.app.current_page.emit('show')
+
+    def do_delete_wants_list(self, menu_item):
+        # TODO
+        pass
 
     def on_want_cards_add_activated(self, menu_item):
         # TODO

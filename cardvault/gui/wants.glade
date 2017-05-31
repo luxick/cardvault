@@ -34,6 +34,7 @@
                 <property name="vexpand">True</property>
                 <property name="model">wantsListsStore</property>
                 <property name="search_column">0</property>
+                <signal name="button-press-event" handler="do_wants_tree_press_event" swapped="no"/>
                 <signal name="row-activated" handler="on_want_list_selected" object="wantsTreeSelection" swapped="no"/>
                 <child internal-child="selection">
                   <object class="GtkTreeSelection" id="wantsTreeSelection"/>
@@ -179,6 +180,28 @@
         <property name="use_underline">True</property>
         <signal name="activate" handler="on_want_cards_remove_activated" swapped="no"/>
         <accelerator key="Delete" signal="activate"/>
+      </object>
+    </child>
+  </object>
+  <object class="GtkMenu" id="wants_wantsListPopup">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="wantsListRenameItem">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Rename</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_rename_wants_list" object="wantsListsTree" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="wantsListDeleteItem">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Delete</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_delete_wants_list" object="wantsListsTree" swapped="no"/>
       </object>
     </child>
   </object>

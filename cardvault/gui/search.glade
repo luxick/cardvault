@@ -16,6 +16,7 @@
     </child>
   </object>
   <object class="GtkPaned" id="searchView">
+    <property name="name">Search</property>
     <property name="visible">True</property>
     <property name="can_focus">True</property>
     <child>

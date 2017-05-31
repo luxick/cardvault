@@ -35,6 +35,7 @@ class Application:
         self.ui.add_from_file(util.get_ui_filename("search.glade"))
         self.ui.add_from_file(util.get_ui_filename("library.glade"))
         self.ui.add_from_file(util.get_ui_filename("wants.glade"))
+        self.ui.add_from_file(util.get_ui_filename("dialogs.glade"))
 
         self.current_page = None
         self.unsaved_changes = False
@@ -184,27 +185,19 @@ class Application:
         dialog.run()
         dialog.destroy()
 
-    def show_tag_rename_dialog(self, tag):
-        def rename(button, entry):
-            self.rename_tag(tag, entry.get_text())
-            window.destroy()
-            self.current_page.emit('show')
+    def show_rename_dialog(self, name: str) -> str:
+        dialog = self.ui.get_object("renameDialog")     # type: Gtk.Dialog
+        dialog.set_transient_for(self.ui.get_object("mainWindow"))
+        entry = self.ui.get_object("renameDialogEntry")
+        entry.set_text(name)
 
-        def eval_key_pressed(widget,event):
-            key, modifier = Gtk.accelerator_parse('Escape')
-            keyval = event.keyval
-            if keyval == key:
-                window.destroy()
+        result = dialog.run()
+        dialog.hide()
 
-        builder = Gtk.Builder()
-        builder.add_from_file(util.get_ui_filename("dialogs.glade"))
-        window = builder.get_object("renameWindow")
-        entry = builder.get_object("renameEntry")
-        entry.set_text(tag)
-        builder.get_object("renameButton").connect('clicked', rename, entry)
-        entry.connect('activate', rename, entry)
-        window.show_all()
-        window.connect("key-press-event", eval_key_pressed)
+        if result == Gtk.ResponseType.OK:
+            return entry.get_text()
+        else:
+            return name
 
     def save_library(self):
         # Save library file
@@ -300,6 +293,12 @@ class Application:
         if list_name:
             out = {card.multiverse_id: card for card in self.wants[list_name]}
             return out
+
+    def rename_want_list(self, old, new):
+        self.wants[new] = self.wants[old]
+        del self.wants[old]
+        util.log("Want List '" + old + "' renamed to '" + new + "'", util.LogLevel.Info)
+        self.unsaved_changes = True
 
     def add_want_list(self, name):
         self.wants[name] = []
