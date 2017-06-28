@@ -38,6 +38,7 @@ def reload_wants_view(app: 'application.Application', selected_list: str = None)
     label = app.ui.get_object("wantsTileLabel")  # type: Gtk.Label
     label.set_markup("<big>" + str(selected_list) + "</big>")
 
+
 def reload_wants_list(app: 'application.Application', preserve=False):
     tree = app.ui.get_object("wantsListsTree")
     (path, column) = tree.get_cursor()

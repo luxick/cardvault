@@ -7,12 +7,11 @@ from urllib import request
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import GdkPixbuf
+from gi.repository import GdkPixbuf, GLib
 import six.moves.cPickle as pickle
 from PIL import Image as PImage
 
 from mtgsdk import Set
-from mtgsdk import Card
 from mtgsdk import MtgException
 
 # Title of the Program Window
@@ -129,6 +128,8 @@ def reload_image_cache(path: str) -> dict:
             imagename = os.path.splitext(imagefile)[0]
             cache[imagename] = pixbuf
         except OSError as err:
+            log("Error loading image: " + str(err), LogLevel.Error)
+        except GLib.GError as err:
             log("Error loading image: " + str(err), LogLevel.Error)
     return cache
 

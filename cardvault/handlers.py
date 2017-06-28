@@ -272,8 +272,6 @@ class Handlers:
         if event.button == 3:  # right click
             path = treeview.get_path_at_pos(int(event.x), int(event.y))
             if path:
-                tree_iter = treeview.get_model().get_iter(path[0])
-                tag = treeview.get_model().get_value(tree_iter, 0)
                 self.app.ui.get_object("wants_wantsListPopup").popup(None, None, None, None, 0, event.time)
             return True
 
@@ -287,17 +285,49 @@ class Handlers:
             self.app.rename_want_list(tag, new_name)
             self.app.current_page.emit('show')
 
-    def do_delete_wants_list(self, menu_item):
-        # TODO
-        pass
+    def do_delete_wants_list(self, tree):
+        (model, pathlist) = tree.get_selection().get_selected_rows()
+        for path in pathlist:
+            tree_iter = model.get_iter(path)
+            name = model.get_value(tree_iter, 0)
+
+            self.app.delete_wants_list(name)
+            self.app.current_page.emit('show')
 
     def on_want_cards_add_activated(self, menu_item):
-        # TODO
-        pass
+        # Get selected cards
+        tree = self.app.ui.get_object("wantsListContainer").get_child()
+        selected = tree.get_selected_cards()
+
+        # Get selected list
+        list_tree = self.app.ui.get_object("wantsListsTree")
+        (model, pathlist) = list_tree.get_selection().get_selected_rows()
+        for path in pathlist:
+            tree_iter = model.get_iter(path)
+            list_name = model.get_value(tree_iter, 0)
+
+        for card in selected.values():
+            self.app.add_card_to_lib(card)
+            self.app.remove_card_from_want_list(card, list_name)
+
+        wants_funct.reload_wants_view(self.app, list_name)
 
     def on_want_cards_remove_activated(self, menu_item):
-        # TODO
-        pass
+        # Get selected cards
+        tree = self.app.ui.get_object("wantsListContainer").get_child()
+        selected = tree.get_selected_cards()
+
+        # Get selected list
+        list_tree = self.app.ui.get_object("wantsListsTree")
+        (model, pathlist) = list_tree.get_selection().get_selected_rows()
+        for path in pathlist:
+            tree_iter = model.get_iter(path)
+            list_name = model.get_value(tree_iter, 0)
+
+        for card in selected.values():
+            self.app.remove_card_from_want_list(card, list_name)
+
+        wants_funct.reload_wants_view(self.app, list_name)
 
     # Handlers for TreeViews etc. which have been not added by Glade
 

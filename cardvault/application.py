@@ -294,6 +294,12 @@ class Application:
             out = {card.multiverse_id: card for card in self.wants[list_name]}
             return out
 
+    def delete_wants_list(self, name: str):
+        del self.wants[name]
+        util.log("Deleted Wants List '{}'".format(name), util.LogLevel.Info)
+        self.push_status("Deleted Wants List '{}'".format(name))
+        self.unsaved_changes = True
+
     def rename_want_list(self, old, new):
         self.wants[new] = self.wants[old]
         del self.wants[old]
@@ -327,6 +333,11 @@ class Application:
         del self.library[card.multiverse_id]
         self.push_status(card.name + " removed from library")
         self.unsaved_changes = True
+
+    def remove_card_from_want_list(self, card: mtgsdk.Card, list: str):
+        l = self.wants[list]
+        l.remove(card)
+        util.log("Removed '{}' from wants list '{}'".format(card.name, list), util.LogLevel.Info)
 
     def get_card_image(self, card, sizex, sizey):
         # Try using file from local cache, or load online
