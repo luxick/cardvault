@@ -99,7 +99,7 @@ class Application:
         window.set_title(card.name)
         # Card Image
         container = builder.get_object("imageContainer")
-        pixbuf = self.get_card_image(card, 63 * 5, 88 * 5)
+        pixbuf = util.load_card_image(card, 63 * 5, 88 * 5, self.image_cache)
         image = Gtk.Image().new_from_pixbuf(pixbuf)
         container.add(image)
         # Name
@@ -110,7 +110,7 @@ class Application:
             supertypes = " - " + " ".join(card.subtypes)
         types = " ".join(card.types) + supertypes
         builder.get_object("cardTypes").set_text(types)
-        # Rarity
+        # Rarityget_card_image
         builder.get_object("cardRarity").set_text(card.rarity if card.rarity else "")
         # Release
         builder.get_object("cardReleaseDate").set_text(card.release_date if card.release_date else "")
@@ -339,16 +339,6 @@ class Application:
         l.remove(card)
         util.log("Removed '{}' from wants list '{}'".format(card.name, list), util.LogLevel.Info)
 
-    def get_card_image(self, card, sizex, sizey):
-        # Try using file from local cache, or load online
-        try:
-            pixbuf = self.image_cache[card.multiverse_id]
-        except KeyError as err:
-            util.log("No local image for " + card.name + ". Loading from " + card.image_url, util.LogLevel.Info)
-            pixbuf = util.load_card_image_online(card, sizex, sizey)
-            self.image_cache[card.multiverse_id] = pixbuf
-        return pixbuf
-
     def get_mana_icons(self, mana_string):
         if not mana_string:
             util.log("No mana string provided", util.LogLevel.Warning)
@@ -371,5 +361,5 @@ class Application:
 
 
 def main():
-    win = Application()
+    Application()
     Gtk.main()

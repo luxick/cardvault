@@ -26,10 +26,10 @@ def init_search_view(app: 'application.Application'):
     _init_results_tree(app)
 
 
-def reload_serach_view(app: 'application.Application'):
+def reload_search_view(app: 'application.Application'):
     results_tree = app.ui.get_object("searchResults").get_child()
     cards = results_tree.lib
-    results_tree.update(cards, True)
+    results_tree.update(cards)
 
 
 def get_filters(app: 'application.Application') -> dict:
@@ -94,7 +94,7 @@ def search_cards(term: str, filters: dict) -> dict:
 
 def _init_results_tree(app: 'application.Application'):
     overlay = app.ui.get_object("searchResults")
-    card_list = cardlist.CardList(False, app)
+    card_list = cardlist.CardList(False, app, util.SEARCH_TREE_COLORS)
     card_list.set_name("resultsScroller")
     card_list.list.connect("row-activated", app.handlers.on_search_card_selected)
     card_list.selection.connect("changed", app.handlers.on_search_selection_changed)

@@ -1,13 +1,15 @@
-from cardvault import cardlist
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
+
+from cardvault import util
+from cardvault import cardlist
 
 
 def init_library_view(app):
     # Create Tree View for library
     container = app.ui.get_object("libraryContainer")
-    card_list = cardlist.CardList(True, app)
+    card_list = cardlist.CardList(True, app, util.GENERIC_TREE_COLORS)
     card_list.set_name("libScroller")
     # Show details
     card_list.list.connect("row-activated", app.handlers.on_library_card_selected)

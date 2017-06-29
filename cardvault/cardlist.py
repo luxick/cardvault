@@ -12,15 +12,16 @@ gi.require_version('Gdk', '3.0')
 
 
 class CardList(Gtk.ScrolledWindow):
-    def __init__(self, with_filter, app : 'application.Application'):
+    def __init__(self, filtered, app: 'application.Application', row_colors: Dict[str, str]):
         Gtk.ScrolledWindow.__init__(self)
         self.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         self.set_hexpand(True)
         self.set_vexpand(True)
 
-        self.filtered = with_filter
+        self.filtered = filtered
         self.lib = {}
         self.app = app
+        self.row_colors = row_colors
 
         # Columns are these:
         # 0 Multiverse ID
@@ -127,34 +128,24 @@ class CardList(Gtk.ScrolledWindow):
             output[card_id] = card
         return output
 
-    def update(self, library: Dict[str, Type[Card]], colorize=False):
+    def update(self, library: Dict[str, Type[Card]]):
         self.store.clear()
         if library is None:
             return
         self.lib = library
+        # Disable update if tree is filtered (performance)
         if self.filtered:
             self.list.freeze_child_notify()
             self.list.set_model(None)
 
         util.log("Updating tree view", util.LogLevel.Info)
-
         start = time.time()
-
         all_wants = self.app.get_wanted_card_ids()
 
-        for card_id, card in library.items():
+        for card in library.values():
             if card.multiverse_id is not None:
-
-                if self.app.library.__contains__(card_id) and colorize:
-                    color = util.card_view_colors["owned"]
-                elif all_wants.__contains__(card_id) and colorize:
-                    color = util.card_view_colors["wanted"]
-                else:
-                    color = util.card_view_colors["unowned"]
-                if card.type == "Land":
-                    mana_cost = None
-                else:
-                    mana_cost = self.app.get_mana_icons(card.mana_cost)
+                color = self.get_row_color(card, self.app.library, all_wants, self.row_colors)
+                mana_cost = None if card.type == "Land" else self.app.get_mana_icons(card.mana_cost)
                 item = [card.multiverse_id,
                         card.name,
                         " ".join(card.supertypes if card.supertypes else ""),
@@ -169,15 +160,16 @@ class CardList(Gtk.ScrolledWindow):
                         color]
                 self.store.append(item)
         end = time.time()
-
         util.log("Time to build Table: " + str(round(end - start, 3)) + "s", util.LogLevel.Info)
         util.log("Total entries: " + str(len(self.lib)), util.LogLevel.Info)
 
+        # Reactivate update for filtered trees
         if self.filtered:
             self.list.set_model(self.filter_and_sort)
             self.list.thaw_child_notify()
 
-    def compare_rarity(self, model, row1, row2, user_data):
+    @staticmethod
+    def compare_rarity(model, row1, row2, user_data):
         # Column for rarity
         sort_column = 4
         value1 = model.get_value(row1, sort_column)
@@ -188,5 +180,14 @@ class CardList(Gtk.ScrolledWindow):
             return 0
         else:
             return 1
+
+    @staticmethod
+    def get_row_color(card, lib: dict, wants: dict, colors: dict) -> str:
+        if lib.__contains__(card.multiverse_id):
+            return colors["owned"]
+        elif wants.__contains__(card.multiverse_id):
+            return colors["wanted"]
+        else:
+            return colors["unowned"]
 
 

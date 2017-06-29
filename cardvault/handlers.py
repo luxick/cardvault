@@ -3,7 +3,6 @@ gi.require_version('Gtk', '3.0')
 import datetime
 import os
 from gi.repository import Gtk
-from typing import Type
 
 from cardvault import lib_funct
 from cardvault import search_funct
@@ -32,8 +31,9 @@ class Handlers:
 
         if response == Gtk.ResponseType.OK:
             # prepare export file
-            file = {"library": self.app.library, "tags": self.app.tags}
+            file = {"library": self.app.library, "tags": self.app.tags, "wants": self.app.wants}
             util.export_library(dialog.get_filename(), file)
+            self.app.push_status("Library exported")
 
         dialog.destroy()
 
@@ -54,9 +54,11 @@ class Handlers:
                 imports = util.import_library(dialog.get_filename())
                 self.app.library = imports[0]
                 self.app.tags = imports[1]
+                self.app.wants = imports[2]
                 # Cause current page to reload with imported data
                 self.app.current_page.emit('show')
                 self.app.unsaved_changes = True
+                self.app.push_status("Library imported")
         dialog.destroy()
 
     def on_view_changed(self, item):
@@ -90,7 +92,7 @@ class Handlers:
         results = search_funct.search_cards(search_term, filters)
 
         card_list = self.app.ui.get_object("searchResults").get_child()
-        card_list.update(results, colorize=True)
+        card_list.update(results)
 
         self.app.ui.get_object("searchOverlay").set_visible(False)
 
@@ -111,12 +113,12 @@ class Handlers:
             card_id = model.get_value(tree_iter, 0)
             card = card_view.lib[card_id]
             self.app.add_card_to_lib(card)
-        search_funct.reload_serach_view(self.app)
+        search_funct.reload_search_view(self.app)
         self.app.ui.get_object("searchEntry").grab_focus()
 
     def search_tree_popup_showed(self, menu):
         # Create wants Submenu
-        wants_item = self.app.ui.get_object("searchListPopupTags")
+        wants_item = self.app.ui.get_object("searchListPopupWants")
         wants_sub = Gtk.Menu()
         wants_item.set_submenu(wants_sub)
 
@@ -125,7 +127,6 @@ class Handlers:
             wants_sub.add(item)
             item.set_label(list_name)
             item.connect('activate', self.search_popup_add_wants)
-
         wants_item.show_all()
 
     def search_popup_add_wants(self, item):
@@ -134,7 +135,7 @@ class Handlers:
         cards = card_list.get_selected_cards()
         for card in cards.values():
             self.app.add_card_to_want_list(item.get_label(), card)
-        search_funct.reload_serach_view(self.app)
+        search_funct.reload_search_view(self.app)
         self.app.push_status("Added " + str(len(cards)) + " card(s) to Want List '" + item.get_label() + "'")
 
     # ---------------------------------Library----------------------------------------------
@@ -255,6 +256,7 @@ class Handlers:
 
     def on_new_wants_list_clicked(self, entry):
         name = entry.get_text()
+        entry.set_text("")
         # Check if list name already exists
         if self.app.wants.__contains__(name):
             return
@@ -271,7 +273,15 @@ class Handlers:
     def do_wants_tree_press_event(self, treeview, event):
         if event.button == 3:  # right click
             path = treeview.get_path_at_pos(int(event.x), int(event.y))
+            # Get the selection
+            selection = treeview.get_selection()
+            # Get the selected path(s)
+            rows = selection.get_selected_rows()
+            # If not clicked on selection, change selected rows
             if path:
+                if path[0] not in rows[1]:
+                    selection.unselect_all()
+                    selection.select_path(path[0])
                 self.app.ui.get_object("wants_wantsListPopup").popup(None, None, None, None, 0, event.time)
             return True
 
@@ -282,8 +292,9 @@ class Handlers:
             tag = model.get_value(tree_iter, 0)
 
             new_name = self.app.show_rename_dialog(tag)
-            self.app.rename_want_list(tag, new_name)
-            self.app.current_page.emit('show')
+            if not tag == new_name:
+                self.app.rename_want_list(tag, new_name)
+                self.app.current_page.emit('show')
 
     def do_delete_wants_list(self, tree):
         (model, pathlist) = tree.get_selection().get_selected_rows()
@@ -360,11 +371,12 @@ class Handlers:
             # Get the selected path(s)
             rows = selection.get_selected_rows()
             # If not clicked on selection, change selected rows
-            if path[0] not in rows[1]:
-                selection.unselect_all()
-                selection.select_path(path[0])
-            self.app.ui.get_object("searchListPopup").emit('show')
-            self.app.ui.get_object("searchListPopup").popup(None, None, None, None, 0, event.time)
+            if path:
+                if path[0] not in rows[1]:
+                    selection.unselect_all()
+                    selection.select_path(path[0])
+                self.app.ui.get_object("searchListPopup").emit('show')
+                self.app.ui.get_object("searchListPopup").popup(None, None, None, None, 0, event.time)
             return True
 
     # ---------------------------------Library Tree----------------------------------------------

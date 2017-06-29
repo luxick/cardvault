@@ -7,10 +7,10 @@
     <property name="can_focus">False</property>
     <signal name="show" handler="search_tree_popup_showed" swapped="no"/>
     <child>
-      <object class="GtkMenuItem" id="searchListPopupTags">
+      <object class="GtkMenuItem" id="searchListPopupWants">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="label" translatable="yes">Tag Cards</property>
+        <property name="label" translatable="yes">Add to Wants List</property>
         <property name="use_underline">True</property>
       </object>
     </child>

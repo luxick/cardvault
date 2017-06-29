@@ -4,13 +4,14 @@ from gi.repository import Gtk
 
 from cardvault import cardlist
 from cardvault import application
+from cardvault import util
 
 
 def init_wants_view(app: 'application.Application'):
     # Get container for Cardlist Tree
     container = app.ui.get_object("wantsListContainer")
     # Create new Cardlist
-    card_list = cardlist.CardList(True, app)
+    card_list = cardlist.CardList(True, app, util.GENERIC_TREE_COLORS)
     card_list.set_name("wantsScroller")
     # Show details
     card_list.list.connect("row-activated", app.handlers.on_wants_card_selected)

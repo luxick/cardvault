@@ -32,6 +32,21 @@ START_PAGE = "search"
 
 LOG_LEVEL = 1
 
+# Colors for card rows in search view
+SEARCH_TREE_COLORS ={
+    "unowned": "black",
+    "wanted": "#D39F30",
+    "owned": "#62B62F"
+}
+
+# Colors for card rows in every default view
+GENERIC_TREE_COLORS ={
+    "unowned": "black",
+    "wanted": "black",
+    "owned": "black"
+}
+
+
 default_config = {
     "hide_duplicates_in_search": False,
     "start_page": "search",
@@ -47,12 +62,6 @@ legality_colors ={
     "Banned": "#C65642",
     "Restricted": "#D39F30",
     "Legal": "#62B62F"
-}
-
-card_view_colors ={
-    "unowned": "black",
-    "wanted": "#D39F30",
-    "owned": "#62B62F"
 }
 
 rarity_dict = {
@@ -126,7 +135,7 @@ def reload_image_cache(path: str) -> dict:
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(path + imagefile)
             # Strip filename extension
             imagename = os.path.splitext(imagefile)[0]
-            cache[imagename] = pixbuf
+            cache[int(imagename)] = pixbuf
         except OSError as err:
             log("Error loading image: " + str(err), LogLevel.Error)
         except GLib.GError as err:
@@ -172,14 +181,22 @@ def load_mana_icons(path: str) -> dict:
     return icons
 
 
+def net_load_set_list() -> dict:
+    """ Load the list of all MTG sets from the Gather"""
+    try:
+        sets = Set.all()
+    except MtgException as err:
+        log(str(err), LogLevel.Error)
+        return {}
+    return sets
+
+
 def load_sets(filename: str) -> dict:
-    if not os.path.isfile(filename):
+    # TODO Update Data function
+    # if not os.path.isfile(filename):
+    if True:
         # use mtgsdk api to retrieve al list of all sets
-        try:
-            sets = Set.all()
-        except MtgException as err:
-            log(str(err), LogLevel.Error)
-            return {}
+        sets = net_load_set_list()
         # Serialize the loaded data to a file
         pickle.dump(sets, open(filename, 'wb'))
     # Deserialize set data from local file
@@ -209,13 +226,15 @@ def import_library(path: str) -> ():
     try:
         library = imported["library"]
         tags = imported["tags"]
+        wants = imported["wants"]
     except KeyError as err:
         log("Invalid library format " + str(err), LogLevel.Error)
         library = {}
         tags = {}
+        wants = {}
 
     log("Library imported", LogLevel.Info)
-    return library, tags
+    return library, tags, wants
 
 
 def save_file(path, file):
@@ -245,14 +264,25 @@ def load_dummy_image(size_x: int, size_y: int) -> GdkPixbuf:
                                                   + '/resources/images/dummy.jpg', size_x, size_y)
 
 
-def load_card_image_online(card, size_x: int, size_y: int) -> GdkPixbuf:
+def load_card_image(card: 'mtgsdk.Card', size_x: int, size_y: int, cache: dict) -> GdkPixbuf:
+    """ Retrieve an card image from cache or alternatively load from gatherer"""
+    try:
+        image = cache[card.multiverse_id]
+    except KeyError as err:
+        log("No local image for " + card.name + ". Loading from " + card.image_url, LogLevel.Info)
+        filename, image = net_load_card_image(card, size_x, size_y)
+        cache[card.multiverse_id] = image
+    return image
+
+
+def net_load_card_image(card, size_x: int, size_y: int) -> (str, GdkPixbuf):
     url = card.image_url
     if url is None:
         log("No Image URL for " + card.name, LogLevel.Warning)
         return load_dummy_image(size_x, size_y)
     filename = IMAGE_CACHE_PATH + str(card.multiverse_id) + ".png"
     request.urlretrieve(url, filename)
-    return GdkPixbuf.Pixbuf.new_from_file_at_size(filename, size_x, size_y)
+    return filename, GdkPixbuf.Pixbuf.new_from_file_at_size(filename, size_x, size_y)
 
 
 def create_mana_icons(icons: dict, mana_string: str) -> GdkPixbuf:
