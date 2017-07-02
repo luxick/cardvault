@@ -7,6 +7,38 @@
     <property name="can_focus">False</property>
     <signal name="show" handler="search_tree_popup_showed" swapped="no"/>
     <child>
+      <object class="GtkMenuItem" id="searchListPopupDetails">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Show Details</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_show_card_details" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkSeparatorMenuItem">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="searchListPopupAdd">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Add to Library</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_search_add_to_lib" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="searchListPopupAddTag">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Add &amp; Tag</property>
+        <property name="use_underline">True</property>
+      </object>
+    </child>
+    <child>
       <object class="GtkMenuItem" id="searchListPopupWants">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
@@ -259,6 +291,22 @@
                 <property name="left_attach">1</property>
                 <property name="top_attach">4</property>
               </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="searchClearAll">
+                <property name="label" translatable="yes">Clear All</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="do_search_clear_all_clicked" swapped="no"/>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">5</property>
+              </packing>
+            </child>
+            <child>
+              <placeholder/>
             </child>
           </object>
           <packing>

@@ -6,6 +6,8 @@ import re
 from urllib import request
 
 import gi
+import time
+
 gi.require_version('Gtk', '3.0')
 from gi.repository import GdkPixbuf, GLib
 import six.moves.cPickle as pickle
@@ -184,7 +186,10 @@ def load_mana_icons(path: str) -> dict:
 def net_load_set_list() -> dict:
     """ Load the list of all MTG sets from the Gather"""
     try:
+        start = time.time()
         sets = Set.all()
+        stop = time.time()
+        log("Fetched set list in {}s".format(round(stop-start, 3)), LogLevel.Info)
     except MtgException as err:
         log(str(err), LogLevel.Error)
         return {}
@@ -193,8 +198,7 @@ def net_load_set_list() -> dict:
 
 def load_sets(filename: str) -> dict:
     # TODO Update Data function
-    # if not os.path.isfile(filename):
-    if True:
+    if not os.path.isfile(filename):
         # use mtgsdk api to retrieve al list of all sets
         sets = net_load_set_list()
         # Serialize the loaded data to a file

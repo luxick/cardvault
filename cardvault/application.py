@@ -28,6 +28,13 @@ from cardvault import wants_funct
 class Application:
     # ---------------------------------Initialize the Application----------------------------------------------
     def __init__(self):
+
+        # Load configuration file
+        self.configfile = util.get_root_filename("config.json")
+        self.config = util.parse_config(self.configfile, util.default_config)
+        util.LOG_LEVEL = self.config["log_level"]
+        util.log("Start using config file: '{}'".format(self.configfile), util.LogLevel.Info)
+
         # Load ui files
         self.ui = Gtk.Builder()
         self.ui.add_from_file(util.get_ui_filename("mainwindow.glade"))
@@ -49,17 +56,13 @@ class Application:
             "wants": self.ui.get_object("wantsView")
         }
 
-        # Load configuration file
-        self.configfile = util.get_root_filename("config.json")
-        self.config = util.parse_config(self.configfile, util.default_config)
-
-        util.LOG_LEVEL = self.config["log_level"]
-
         # Load data from cache path
+        util.log("Loading image cache...", util.LogLevel.Info)
         self.image_cache = util.reload_image_cache(util.CACHE_PATH + "images/")
         self.precon_icons = util.reload_preconstructed_icons(util.CACHE_PATH + "icons/")
         self.mana_icons = util.load_mana_icons(os.path.dirname(__file__) + "/resources/mana/")
 
+        util.log("Loading set list...", util.LogLevel.Info)
         self.sets = util.load_sets(util.get_root_filename("sets"))
 
         self.library = Dict[str, Type[mtgsdk.Card]]
@@ -85,6 +88,9 @@ class Application:
         view_menu = self.ui.get_object("viewMenu")
         start_page = [page for page in view_menu.get_children() if page.get_name() == util.START_PAGE]
         start_page[0].activate()
+
+
+        util.log("Launching Card Vault version {}".format(util.VERSION), util.LogLevel.Info)
 
     def push_status(self, msg):
         status_bar = self.ui.get_object("statusBar")
@@ -185,11 +191,14 @@ class Application:
         dialog.run()
         dialog.destroy()
 
-    def show_rename_dialog(self, name: str) -> str:
-        dialog = self.ui.get_object("renameDialog")     # type: Gtk.Dialog
+    def show_name_enter_dialog(self, title: str, value: str) -> str:
+        dialog = self.ui.get_object("nameEnterDialog")     # type: Gtk.Dialog
         dialog.set_transient_for(self.ui.get_object("mainWindow"))
-        entry = self.ui.get_object("renameDialogEntry")
-        entry.set_text(name)
+        label = self.ui.get_object("nameEnterLabel")
+        label.set_text(title)
+        entry = self.ui.get_object("nameEnterEntry")
+        entry.set_text(value)
+        entry.grab_focus()
 
         result = dialog.run()
         dialog.hide()
@@ -197,7 +206,7 @@ class Application:
         if result == Gtk.ResponseType.OK:
             return entry.get_text()
         else:
-            return name
+            return value
 
     def save_library(self):
         # Save library file
@@ -309,10 +318,10 @@ class Application:
     def add_want_list(self, name):
         self.wants[name] = []
         util.log("Want list  '" + name + "' created", util.LogLevel.Info)
-        self.push_status("Created want listwantsListContainer '" + name + "'")
+        self.push_status("Created want list '" + name + "'")
         self.unsaved_changes = True
 
-    def add_card_to_want_list(self, list_name, card):
+    def add_card_to_want_list(self, list_name: str, card: 'mtgsdk.Card'):
         self.wants[list_name].append(card)
         util.log(card.name + " added to want list " + list_name, util.LogLevel.Info)
         self.unsaved_changes = True
@@ -341,7 +350,7 @@ class Application:
 
     def get_mana_icons(self, mana_string):
         if not mana_string:
-            util.log("No mana string provided", util.LogLevel.Warning)
+            util.log("No mana string provided", util.LogLevel.Info)
             return
         icon_list = re.findall("{(.*?)}", mana_string)
         icon_name = "_".join(icon_list)

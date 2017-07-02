@@ -118,7 +118,7 @@ class CardList(Gtk.ScrolledWindow):
 
         self.store.set_sort_column_id(1, Gtk.SortType.ASCENDING)
 
-    def get_selected_cards(self):
+    def get_selected_cards(self) -> dict:
         (model, pathlist) = self.selection.get_selected_rows()
         output = {}
         for path in pathlist:

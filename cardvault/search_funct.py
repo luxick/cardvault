@@ -1,6 +1,7 @@
 from urllib.error import URLError, HTTPError
 
 import gi
+import time
 from gi.repository import Gtk, Gdk
 
 from cardvault import cardlist
@@ -63,6 +64,8 @@ def search_cards(term: str, filters: dict) -> dict:
 
     # Load card info from internet
     try:
+        util.log("Fetching card info ...", util.LogLevel.Info)
+        start = time.time()
         cards = Card.where(name=term) \
             .where(colorIdentity=filters["mana"]) \
             .where(types=filters["type"]) \
@@ -70,6 +73,8 @@ def search_cards(term: str, filters: dict) -> dict:
             .where(rarity=filters["rarity"]) \
             .where(pageSize=50) \
             .where(page=1).all()
+        end = time.time()
+        util.log("Card info fetched in {}s".format(round(end - start, 3)), util.LogLevel.Info)
     except (URLError, HTTPError) as err:
         util.log(err, util.LogLevel.Error)
         return

@@ -96,12 +96,14 @@ class Handlers:
 
         self.app.ui.get_object("searchOverlay").set_visible(False)
 
-    def do_clear_mana_filter(self, mana_filter_grid):
+    @staticmethod
+    def do_clear_mana_filter(mana_filter_grid):
         for toggle_button in mana_filter_grid.get_children():
             if isinstance(toggle_button, Gtk.ToggleButton):
                 toggle_button.set_active(False)
 
-    def do_clear_set_filter(self, entry, icon_pos, button):
+    @staticmethod
+    def do_clear_set_filter(entry, icon_pos, button):
         entry.set_text("")
 
     def do_add_clicked(self, button):
@@ -117,6 +119,26 @@ class Handlers:
         self.app.ui.get_object("searchEntry").grab_focus()
 
     def search_tree_popup_showed(self, menu):
+        # Create tag submenu
+        tags_item = self.app.ui.get_object("searchListPopupAddTag")
+        tags_sub = Gtk.Menu()
+        tags_item.set_submenu(tags_sub)
+
+        for list_name in self.app.tags.keys():
+            item = Gtk.MenuItem()
+            tags_sub.add(item)
+            item.set_label(list_name)
+            item.connect('activate', self.search_popup_add_tags)
+
+        # Add separator
+        tags_sub.add(Gtk.SeparatorMenuItem())
+        # Add new tag item
+        new_tag = Gtk.MenuItem("New Tag")
+        new_tag.connect('activate', self.new_tag_and_add)
+        tags_sub.add(new_tag)
+
+        tags_item.show_all()
+
         # Create wants Submenu
         wants_item = self.app.ui.get_object("searchListPopupWants")
         wants_sub = Gtk.Menu()
@@ -127,7 +149,52 @@ class Handlers:
             wants_sub.add(item)
             item.set_label(list_name)
             item.connect('activate', self.search_popup_add_wants)
+
+        # Add separator
+        wants_sub.add(Gtk.SeparatorMenuItem())
+        # Add new tag item
+        new_want = Gtk.MenuItem("New Want List")
+        new_want.connect('activate', self.new_wants_and_add)
+        wants_sub.add(new_want)
+
         wants_item.show_all()
+
+    def new_tag_and_add(self, menu_item):
+        # Get selected cards
+        card_list = self.app.ui.get_object("searchResults").get_child()
+        cards = card_list.get_selected_cards()
+        response = self.app.show_name_enter_dialog("Enter name for new Tag", "")
+        if not response == "":
+            self.app.add_tag(response)
+            for card in cards.values():
+                self.app.add_card_to_lib(card, response)
+        else:
+            util.log("No tag name entered", util.LogLevel.Warning)
+            self.app.push_status("No name for new tag entered")
+        search_funct.reload_search_view(self.app)
+
+    def new_wants_and_add(self, menu_item):
+        # Get selected cards
+        card_list = self.app.ui.get_object("searchResults").get_child()
+        cards = card_list.get_selected_cards()
+        response = self.app.show_name_enter_dialog("Enter name for new Want List", "")
+        if not response == "":
+            self.app.add_want_list(response)
+            for card in cards.values():
+                self.app.add_card_to_want_list(response, card)
+        else:
+            util.log("No list name entered", util.LogLevel.Warning)
+            self.app.push_status("No name for new wants list entered")
+        search_funct.reload_search_view(self.app)
+
+    def search_popup_add_tags(self, item):
+        # Get selected cards
+        card_list = self.app.ui.get_object("searchResults").get_child()
+        cards = card_list.get_selected_cards()
+        for card in cards.values():
+            self.app.add_card_to_lib(card, item.get_label())
+        search_funct.reload_search_view(self.app)
+        self.app.push_status("Added " + str(len(cards)) + " card(s) to library.")
 
     def search_popup_add_wants(self, item):
         # Get selected cards
@@ -137,6 +204,28 @@ class Handlers:
             self.app.add_card_to_want_list(item.get_label(), card)
         search_funct.reload_search_view(self.app)
         self.app.push_status("Added " + str(len(cards)) + " card(s) to Want List '" + item.get_label() + "'")
+
+    def do_search_clear_all_clicked(self, button):
+        """ Rest all controls in search view """
+        self.app.ui.get_object("searchEntry").set_text("")
+        self.do_clear_mana_filter(self.app.ui.get_object("manaFilterGrid"))
+        self.app.ui.get_object("rarityCombo").set_active(0)
+        self.app.ui.get_object("typeCombo").set_active(0)
+        self.app.ui.get_object("setEntry").set_text("")
+
+
+    def do_show_card_details(self, menu_item):
+        tree = self.app.ui.get_object("searchResults").get_child()
+        cards = tree.get_selected_cards()
+        for card in cards.values():
+            self.app.show_card_details(card)
+
+    def do_search_add_to_lib(self, menu_item):
+        tree = self.app.ui.get_object("searchResults").get_child()
+        cards = tree.get_selected_cards()
+        for card in cards.values():
+            self.app.add_card_to_lib(card)
+        search_funct.reload_search_view(self.app)
 
     # ---------------------------------Library----------------------------------------------
 
@@ -194,7 +283,7 @@ class Handlers:
             tree_iter = model.get_iter(path)
             tag = model.get_value(tree_iter, 0)
 
-            new_name = self.app.show_rename_dialog(tag)
+            new_name = self.app.show_name_enter_dialog("Rename Tag", tag)
             self.app.rename_tag(tag, new_name)
             self.app.current_page.emit('show')
 
@@ -291,7 +380,7 @@ class Handlers:
             tree_iter = model.get_iter(path)
             tag = model.get_value(tree_iter, 0)
 
-            new_name = self.app.show_rename_dialog(tag)
+            new_name = self.app.show_name_enter_dialog("Rename Want List", tag)
             if not tag == new_name:
                 self.app.rename_want_list(tag, new_name)
                 self.app.current_page.emit('show')
