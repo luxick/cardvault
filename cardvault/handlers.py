@@ -1,4 +1,5 @@
 import gi
+
 gi.require_version('Gtk', '3.0')
 import datetime
 import os
@@ -78,9 +79,12 @@ class Handlers:
     def do_delete_event(self, arg1, arg2):
         if self.app.unsaved_changes:
             response = self.app.show_question_dialog("Unsaved Changes", "You have unsaved changes in your library. "
-                                                                    "Save before exiting?")
+                                                                        "Save before exiting?")
             if response == Gtk.ResponseType.YES:
                 self.app.save_library()
+                return False
+            elif response == Gtk.ResponseType.CANCEL:
+                return True
 
     # ---------------------------------Search----------------------------------------------
 
@@ -213,7 +217,6 @@ class Handlers:
         self.app.ui.get_object("typeCombo").set_active(0)
         self.app.ui.get_object("setEntry").set_text("")
 
-
     def do_show_card_details(self, menu_item):
         tree = self.app.ui.get_object("searchResults").get_child()
         cards = tree.get_selected_cards()
@@ -286,7 +289,6 @@ class Handlers:
             new_name = self.app.show_name_enter_dialog("Rename Tag", tag)
             self.app.rename_tag(tag, new_name)
             self.app.current_page.emit('show')
-
 
     def do_tag_list_delete(self, tree):
         (model, pathlist) = tree.get_selection().get_selected_rows()
@@ -521,5 +523,3 @@ class Handlers:
             self.app.ui.get_object("wants_cardListPopup").emit('show')
             self.app.ui.get_object("wants_cardListPopup").popup(None, None, None, None, 0, event.time)
             return True
-
-

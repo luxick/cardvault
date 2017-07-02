@@ -178,7 +178,10 @@ class Application:
 
     def show_question_dialog(self, title, message):
         dialog = Gtk.MessageDialog(self.ui.get_object("mainWindow"), 0, Gtk.MessageType.WARNING,
-                                   Gtk.ButtonsType.YES_NO, title)
+                                   Gtk.ButtonsType.NONE, title)
+        dialog.add_buttons(Gtk.STOCK_YES, Gtk.ResponseType.YES,
+                           Gtk.STOCK_NO, Gtk.ResponseType.NO,
+                           Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
         dialog.format_secondary_text(message)
         response = dialog.run()
         dialog.destroy()
@@ -346,6 +349,7 @@ class Application:
     def remove_card_from_want_list(self, card: mtgsdk.Card, list: str):
         l = self.wants[list]
         l.remove(card)
+        self.unsaved_changes = True
         util.log("Removed '{}' from wants list '{}'".format(card.name, list), util.LogLevel.Info)
 
     def get_mana_icons(self, mana_string):
