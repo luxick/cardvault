@@ -18,8 +18,6 @@ from typing import Type, Dict, List
 
 from cardvault import handlers
 from cardvault import util
-from cardvault import search_funct
-from cardvault import lib_funct
 from cardvault import wants_funct
 
 
@@ -73,14 +71,6 @@ class Application:
         self.handlers = handlers.Handlers(self)
         self.ui.connect_signals(self.handlers)
 
-        # Initialize the views
-
-        search_funct.init_search_view(self)
-
-        lib_funct.init_library_view(self)
-
-        wants_funct.init_wants_view(self)
-
         self.ui.get_object("mainWindow").connect('delete-event', Gtk.main_quit)
         self.ui.get_object("mainWindow").show_all()
         self.push_status("Card Vault ready.")
@@ -88,7 +78,6 @@ class Application:
         view_menu = self.ui.get_object("viewMenu")
         start_page = [page for page in view_menu.get_children() if page.get_name() == util.START_PAGE]
         start_page[0].activate()
-
 
         util.log("Launching Card Vault version {}".format(util.VERSION), util.LogLevel.Info)
 

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.20.0 -->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <object class="GtkListStore" id="cardStore">
+    <columns>
+      <!-- column-name multiverse_id -->
+      <column type="gint"/>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name supertypes -->
+      <column type="gchararray"/>
+      <!-- column-name types -->
+      <column type="gchararray"/>
+      <!-- column-name rarity -->
+      <column type="gchararray"/>
+      <!-- column-name power -->
+      <column type="gchararray"/>
+      <!-- column-name toughness -->
+      <column type="gchararray"/>
+      <!-- column-name printings -->
+      <column type="gchararray"/>
+      <!-- column-name mana_cost -->
+      <column type="GdkPixbuf"/>
+      <!-- column-name cmc -->
+      <column type="gint"/>
+      <!-- column-name set_name -->
+      <column type="gchararray"/>
+      <!-- column-name color -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkTreeView" id="cardTree">
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <property name="model">cardStore</property>
+    <property name="search_column">2</property>
+    <property name="enable_grid_lines">both</property>
+    <child internal-child="selection">
+      <object class="GtkTreeSelection"/>
+    </child>
+    <child>
+      <object class="GtkTreeViewColumn" id="col_name">
+        <property name="resizable">True</property>
+        <property name="title" translatable="yes">Card Name</property>
+        <property name="sort_indicator">True</property>
+        <property name="sort_column_id">1</property>
+        <child>
+          <object class="GtkCellRendererText" id="cell_bold">
+            <property name="weight">800</property>
+          </object>
+          <attributes>
+            <attribute name="foreground">11</attribute>
+            <attribute name="text">1</attribute>
+          </attributes>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkTreeViewColumn" id="col_supertypes">
+        <property name="title" translatable="yes">Supertypes</property>
+        <property name="sort_column_id">2</property>
+        <child>
+          <object class="GtkCellRendererText"/>
+          <attributes>
+            <attribute name="foreground">11</attribute>
+            <attribute name="text">2</attribute>
+          </attributes>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkTreeViewColumn" id="col_types">
+        <property name="title" translatable="yes">Types</property>
+        <property name="sort_column_id">3</property>
+        <child>
+          <object class="GtkCellRendererText"/>
+          <attributes>
+            <attribute name="foreground">11</attribute>
+            <attribute name="text">3</attribute>
+          </attributes>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkTreeViewColumn" id="col_rarity">
+        <property name="title" translatable="yes">Rarity</property>
+        <property name="sort_column_id">4</property>
+        <child>
+          <object class="GtkCellRendererText"/>
+          <attributes>
+            <attribute name="foreground">11</attribute>
+            <attribute name="text">4</attribute>
+          </attributes>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkTreeViewColumn" id="col_set">
+        <property name="title" translatable="yes">Edition</property>
+        <property name="sort_column_id">10</property>
+        <child>
+          <object class="GtkCellRendererText"/>
+          <attributes>
+            <attribute name="foreground">11</attribute>
+            <attribute name="text">10</attribute>
+          </attributes>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkTreeViewColumn" id="col_mana">
+        <property name="title" translatable="yes">Mana Cost</property>
+        <property name="sort_column_id">9</property>
+        <child>
+          <object class="GtkCellRendererPixbuf">
+            <property name="xalign">0.019999999552965164</property>
+          </object>
+          <attributes>
+            <attribute name="pixbuf">8</attribute>
+          </attributes>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
