@@ -263,6 +263,8 @@ class Application:
         self.unsaved_changes = True
 
     def rename_tag(self, old, new):
+        if old == new:
+            return
         self.tags[new] = self.tags[old]
         del self.tags[old]
         util.log("Tag '" + old + "' renamed to '" + new + "'", util.LogLevel.Info)
@@ -287,6 +289,8 @@ class Application:
         self.unsaved_changes = True
 
     def rename_want_list(self, old, new):
+        if old == new:
+            return
         self.wants[new] = self.wants[old]
         del self.wants[old]
         util.log("Want List '" + old + "' renamed to '" + new + "'", util.LogLevel.Info)

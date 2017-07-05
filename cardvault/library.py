@@ -67,14 +67,22 @@ class LibraryHandlers:
             tag = model.get_value(tree_iter, 0)
 
             new_name = self.app.show_name_enter_dialog("Rename Tag", tag)
-            self.app.rename_tag(tag, new_name)
-            self.app.current_page.emit('show')
+            if new_name and new_name != "":
+                self.app.rename_tag(tag, new_name)
+                self.app.current_page.emit('show')
 
     def do_tag_list_delete(self, tree):
         (model, pathlist) = tree.get_selection().get_selected_rows()
         for path in pathlist:
             tree_iter = model.get_iter(path)
             tag = model.get_value(tree_iter, 0)
+            question = "Really delete tag: {}?".format(tag)
+            dialog = Gtk.MessageDialog(self.app.ui.get_object("mainWindow"), 0, Gtk.MessageType.WARNING,
+                                       Gtk.ButtonsType.YES_NO, question)
+            response = dialog.run()
+            dialog.destroy()
+            if response == Gtk.ResponseType.NO:
+                return
             self.app.remove_tag(tag)
             self.app.current_page.emit('show')
 
