@@ -78,7 +78,8 @@ class CardList(Gtk.ScrolledWindow):
                         mana_cost,
                         card.cmc,
                         card.set_name,
-                        color]
+                        color,
+                        card.original_text]
                 self.store.append(item)
         end = time.time()
         util.log("Time to build Table: " + str(round(end - start, 3)) + "s", util.LogLevel.Info)

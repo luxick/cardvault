@@ -134,21 +134,9 @@ class Application:
 
         # Rulings
         if card.rulings:
-            grid = builder.get_object("rulesGrid")
-            rows = 1
+            store = builder.get_object("rulesStore")
             for rule in card.rulings:
-                date_label = Gtk.Label(rule["date"])
-                text_label = Gtk.Label(rule["text"])
-                text_label.set_line_wrap_mode(Pango.WrapMode.WORD)
-                text_label.set_line_wrap(True)
-                text_label.set_justify(Gtk.Justification.LEFT)
-                text_label.set_halign(Gtk.Align.START)
-
-                grid.attach(date_label, 0, rows+2, 1, 1)
-                grid.attach(text_label, 1, rows+2, 1, 1)
-
-                rows += 1
-            grid.show_all()
+                store.append([rule["date"], rule["text"]])
         else:
             builder.get_object("ruleBox").set_visible(False)
 
@@ -321,6 +309,14 @@ class Application:
         self.library[card.multiverse_id] = card
         self.push_status(card.name + " added to library")
         self.unsaved_changes = True
+
+    def bulk_add_card_to_lib(self, cards: list, tag: str = None):
+        for card in cards:
+            self.add_card_to_lib(card, tag)
+        util.log("Added {} cards to library.".format(str(len(cards))), util.LogLevel.Info)
+        self.push_status("Added {} cards to library.".format(str(len(cards))))
+
+
 
     def remove_card_from_lib(self, card):
         # Check if card is tagged
