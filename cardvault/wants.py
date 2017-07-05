@@ -138,8 +138,8 @@ class WantsHandlers:
         card_list = cardlist.CardList(True, self.app, util.GENERIC_TREE_COLORS)
         card_list.set_name("wantsScroller")
         # Show details
-        card_list.list.connect("row-activated", self.on_wants_card_selected)
-        card_list.list.connect("button-press-event", self.on_wants_cards_press_event)
+        card_list.tree.connect("row-activated", self.on_wants_card_selected)
+        card_list.tree.connect("button-press-event", self.on_wants_cards_press_event)
         # Add card list to container
         container.add(card_list)
         container.add_overlay(self.app.ui.get_object("wantsOverlay"))

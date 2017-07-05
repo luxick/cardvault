@@ -108,7 +108,7 @@ class LibraryHandlers:
         for card in cards.values():
             self.app.untag_card(card, tag)
         self.reload_library(tag)
-        self.reload_tag_list(preserve=True)
+        self.reload_tag_list(none_selected=True)
 
     def do_popup_remove_card(self, item):
         # Get selected cards
@@ -118,7 +118,7 @@ class LibraryHandlers:
         for card in cards.values():
             self.app.remove_card_from_lib(card)
         self.reload_library(self.app.current_lib_tag)
-        self.reload_tag_list(preserve=True)
+        self.reload_tag_list(none_selected=True)
 
     # ---------------------------------Library Tree----------------------------------------------
 
@@ -155,9 +155,9 @@ class LibraryHandlers:
         card_list = cardlist.CardList(True, self.app, util.GENERIC_TREE_COLORS)
         card_list.set_name("libScroller")
         # Show details
-        card_list.list.connect("row-activated", self.on_library_card_selected)
+        card_list.tree.connect("row-activated", self.on_library_card_selected)
         # Show Context menu
-        card_list.list.connect("button-press-event", self.on_library_tree_press_event)
+        card_list.tree.connect("button-press-event", self.on_library_tree_press_event)
         card_list.filter.set_visible_func(self.app.filter_lib_func)
         container.add(card_list)
         container.add_overlay(self.app.ui.get_object("noResults"))
@@ -172,7 +172,7 @@ class LibraryHandlers:
             lib = self.app.library
         else:
             lib = self.app.get_tagged_cards(tag)
-        self.reload_tag_list(True)
+        self.reload_tag_list(tag == "All" or tag == "Untagged")
         tag_combo = self.app.ui.get_object("tagCardCombo")
         tag_combo.set_model(self.app.ui.get_object("tagStore"))
 
@@ -188,7 +188,7 @@ class LibraryHandlers:
         self.app.add_tag(name)
         self.reload_tag_list(True)
 
-    def reload_tag_list(self, preserve=False):
+    def reload_tag_list(self, none_selected=False):
         """Reload left pane tag list"""
         tree = self.app.ui.get_object("tagTree")
         (path, column) = tree.get_cursor()
@@ -196,7 +196,7 @@ class LibraryHandlers:
         store.clear()
         for tag, ids in self.app.tags.items():
             store.append([tag, tag + " (" + str(len(ids)) + ")"])
-        if preserve:
+        if none_selected:
             tree.set_cursor(path if path else 0)
         store.set_sort_column_id(1, Gtk.SortType.ASCENDING)
 

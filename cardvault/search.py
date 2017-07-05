@@ -285,14 +285,14 @@ class SearchHandlers:
         overlay = self.app.ui.get_object("searchResults")
         card_list = cardlist.CardList(False, self.app, util.SEARCH_TREE_COLORS)
         card_list.set_name("resultsScroller")
-        card_list.list.connect("row-activated", self.on_search_card_selected)
+        card_list.tree.connect("row-activated", self.on_search_card_selected)
         card_list.selection.connect("changed", self.on_search_selection_changed)
         overlay.add(card_list)
         overlay.add_overlay(self.app.ui.get_object("searchOverlay"))
         overlay.show_all()
 
         # Connect signal for context menu
-        card_list.list.connect("button-press-event", self.on_search_tree_press_event)
+        card_list.tree.connect("button-press-event", self.on_search_tree_press_event)
 
     @staticmethod
     def _init_combo_box(combo, card_list: list):

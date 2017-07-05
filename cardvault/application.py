@@ -18,9 +18,6 @@ from typing import Type, Dict, List
 
 from cardvault import handlers
 from cardvault import util
-from cardvault import wants_funct
-
-
 
 
 class Application:

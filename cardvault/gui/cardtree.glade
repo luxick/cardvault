@@ -30,23 +30,33 @@
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkTreeModelFilter" id="cardStoreFiltered">
+    <property name="child_model">cardStore</property>
+  </object>
+  <object class="GtkTreeModelSort" id="cardStoreFilteredSorted">
+    <property name="model">cardStoreFiltered</property>
+  </object>
   <object class="GtkTreeView" id="cardTree">
     <property name="visible">True</property>
     <property name="can_focus">True</property>
-    <property name="model">cardStore</property>
+    <property name="model">cardStoreFilteredSorted</property>
     <property name="search_column">2</property>
-    <property name="enable_grid_lines">both</property>
+    <property name="enable_grid_lines">horizontal</property>
     <child internal-child="selection">
-      <object class="GtkTreeSelection"/>
+      <object class="GtkTreeSelection">
+        <property name="mode">multiple</property>
+      </object>
     </child>
     <child>
       <object class="GtkTreeViewColumn" id="col_name">
         <property name="resizable">True</property>
+        <property name="sizing">autosize</property>
         <property name="title" translatable="yes">Card Name</property>
         <property name="sort_indicator">True</property>
         <property name="sort_column_id">1</property>
         <child>
           <object class="GtkCellRendererText" id="cell_bold">
+            <property name="xpad">2</property>
             <property name="weight">800</property>
           </object>
           <attributes>
@@ -57,24 +67,15 @@
       </object>
     </child>
     <child>
-      <object class="GtkTreeViewColumn" id="col_supertypes">
-        <property name="title" translatable="yes">Supertypes</property>
-        <property name="sort_column_id">2</property>
-        <child>
-          <object class="GtkCellRendererText"/>
-          <attributes>
-            <attribute name="foreground">11</attribute>
-            <attribute name="text">2</attribute>
-          </attributes>
-        </child>
-      </object>
-    </child>
-    <child>
       <object class="GtkTreeViewColumn" id="col_types">
+        <property name="resizable">True</property>
+        <property name="sizing">autosize</property>
         <property name="title" translatable="yes">Types</property>
         <property name="sort_column_id">3</property>
         <child>
-          <object class="GtkCellRendererText"/>
+          <object class="GtkCellRendererText">
+            <property name="xpad">2</property>
+          </object>
           <attributes>
             <attribute name="foreground">11</attribute>
             <attribute name="text">3</attribute>
@@ -84,10 +85,14 @@
     </child>
     <child>
       <object class="GtkTreeViewColumn" id="col_rarity">
+        <property name="resizable">True</property>
+        <property name="sizing">autosize</property>
         <property name="title" translatable="yes">Rarity</property>
         <property name="sort_column_id">4</property>
         <child>
-          <object class="GtkCellRendererText"/>
+          <object class="GtkCellRendererText">
+            <property name="xpad">2</property>
+          </object>
           <attributes>
             <attribute name="foreground">11</attribute>
             <attribute name="text">4</attribute>
@@ -97,10 +102,14 @@
     </child>
     <child>
       <object class="GtkTreeViewColumn" id="col_set">
+        <property name="resizable">True</property>
+        <property name="sizing">autosize</property>
         <property name="title" translatable="yes">Edition</property>
         <property name="sort_column_id">10</property>
         <child>
-          <object class="GtkCellRendererText"/>
+          <object class="GtkCellRendererText">
+            <property name="xpad">2</property>
+          </object>
           <attributes>
             <attribute name="foreground">11</attribute>
             <attribute name="text">10</attribute>
@@ -110,6 +119,8 @@
     </child>
     <child>
       <object class="GtkTreeViewColumn" id="col_mana">
+        <property name="resizable">True</property>
+        <property name="sizing">autosize</property>
         <property name="title" translatable="yes">Mana Cost</property>
         <property name="sort_column_id">9</property>
         <child>
