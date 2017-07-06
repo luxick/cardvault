@@ -66,7 +66,7 @@ class CardList(Gtk.ScrolledWindow):
         for card in library.values():
             if card.multiverse_id is not None:
                 color = self.get_row_color(card, self.app.library, all_wants, self.row_colors)
-                mana_cost = None if card.type == "Land" else self.app.get_mana_icons(card.mana_cost)
+                mana_cost = None if card.types.__contains__("Land") else self.app.get_mana_icons(card.mana_cost)
                 item = [card.multiverse_id,
                         card.name,
                         " ".join(card.supertypes if card.supertypes else ""),

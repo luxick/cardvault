@@ -18,6 +18,7 @@ from typing import Type, Dict, List
 
 from cardvault import handlers
 from cardvault import util
+from cardvault import database
 
 
 class Application:
@@ -42,6 +43,11 @@ class Application:
         self.current_page = None
         self.unsaved_changes = False
         self.current_lib_tag = "All"
+
+        self.db = database.CardVaultDB(util.get_root_filename(util.DB_NAME))
+
+        # Create database tables if they do not exist
+        self.db.create_database()
 
         not_found = self.ui.get_object("pageNotFound")
         self.pages = {
@@ -314,13 +320,13 @@ class Application:
         self.push_status(card.name + " added to library")
         self.unsaved_changes = True
 
+        self.db.insert_card(card)
+
     def bulk_add_card_to_lib(self, cards: list, tag: str = None):
         for card in cards:
             self.add_card_to_lib(card, tag)
         util.log("Added {} cards to library.".format(str(len(cards))), util.LogLevel.Info)
         self.push_status("Added {} cards to library.".format(str(len(cards))))
-
-
 
     def remove_card_from_lib(self, card):
         # Check if card is tagged
@@ -342,7 +348,7 @@ class Application:
         if not mana_string:
             util.log("No mana string provided", util.LogLevel.Info)
             return
-        icon_list = re.findall("{(.*?)}", mana_string)
+        icon_list = re.findall("{(.*?)}", mana_string.replace("/", "-"))
         icon_name = "_".join(icon_list)
         try:
             icon = self.precon_icons[icon_name]

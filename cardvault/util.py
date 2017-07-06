@@ -3,6 +3,7 @@ import enum
 import json
 import os
 import re
+import sys
 from urllib import request
 
 import gi
@@ -30,9 +31,17 @@ ICON_CACHE_PATH = os.path.expanduser('~') + "/.cardvault/icons/"
 # When True Search view will list a card multiple times for each set they appear in
 SHOW_FROM_ALL_SETS = True
 
+# First page to show after startup
 START_PAGE = "search"
 
+# Log level of the application
+# 1 Info
+# 2 Warning
+# 3 Error
 LOG_LEVEL = 1
+
+# Name of the database
+DB_NAME = "cardvault.db"
 
 # Colors for card rows in search view
 SEARCH_TREE_COLORS ={
@@ -82,10 +91,27 @@ class LogLevel(enum.Enum):
     Info = 3
 
 
+class TerminalColors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 def log(message: str, log_level: LogLevel):
     if log_level.value <= LOG_LEVEL:
         level_string = "[" + log_level.name + "] "
-        print(level_string + message)
+        if log_level.value == 2:
+            color = TerminalColors.WARNING
+        elif log_level.value == 1:
+            color = TerminalColors.BOLD + TerminalColors.FAIL
+        else:
+            color = ""
+        print(color + level_string + message+TerminalColors.ENDC)
 
 
 def parse_config(filename: str, default: dict):
@@ -119,12 +145,18 @@ def save_config(config: dict, filename: str):
                                     indent=4, separators=(',', ': ')).encode('utf-8'))
 
 
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
+
+
 def get_root_filename(filename: str) -> str:
     return os.path.expanduser(os.path.join('~', '.cardvault', filename))
 
 
 def get_ui_filename(filename: str) -> str:
-    return os.path.expanduser(os.path.join(os.path.dirname(__file__), 'gui', filename))
+    return os.path.join(os.path.dirname(__file__), 'gui', filename)
 
 
 def reload_image_cache(path: str) -> dict:

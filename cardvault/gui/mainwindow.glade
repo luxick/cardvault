@@ -155,6 +155,47 @@
                 </child>
               </object>
             </child>
+            <child>
+              <object class="GtkMenuItem" id="debug">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">DEBUG</property>
+                <property name="use_underline">True</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkMenuItem" id="del_card_db">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Clear Card Data</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="do_clear_card_data" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="load_all_cards">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Load All Cards From Gatherer</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="do_load_all_cards" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="lib_to_db">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Load Library to DB</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="do_load_lib_to_db" swapped="no"/>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
           </object>
           <packing>
             <property name="expand">False</property>

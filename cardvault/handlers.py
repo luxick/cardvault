@@ -1,11 +1,12 @@
 import gi
 gi.require_version('Gtk', '3.0')
 import datetime
+import itertools
 import os
 from gi.repository import Gtk
 
-from cardvault import util
-from cardvault import application
+from cardvault import util, application
+from mtgsdk import Card
 
 from search import SearchHandlers
 from library import LibraryHandlers
@@ -91,3 +92,34 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
                 return False
             elif response == Gtk.ResponseType.CANCEL:
                 return True
+
+    # ---------------------- Debug actions -------------------------------
+
+    def do_load_lib_to_db(self, menu_item):
+        util.log("Attempt loading library to database", util.LogLevel.Info)
+        start = datetime.datetime.now()
+        self.app.db.bulk_insert_card(self.app.library.values())
+        end = datetime.datetime.now()
+        util.log("Finished in {}s".format(str(end-start)), util.LogLevel.Info)
+
+    def do_load_all_cards(self, menu_item):
+        util.log("Attempt fetching all cards from Gatherer. This may take a while...", util.LogLevel.Info)
+        start = datetime.datetime.now()
+        all_cards = []
+        for i in itertools.count():
+            new_cards = Card.where(page=i).where(pageSize=100).all()
+            if len(new_cards) == 0:
+                break
+            all_cards = all_cards + new_cards
+            util.log("Fetched page {}, {} cards so far".format(str(i), str(len(all_cards))), util.LogLevel.Info)
+        end = datetime.datetime.now()
+        util.log("Finished fetching {} cards in {}".format(str(len(all_cards)), (end - start)), util.LogLevel.Info)
+
+        util.log("Inserting cards into library...", util.LogLevel.Info)
+        self.app.db.bulk_insert_card(all_cards)
+        util.log("Done", util.LogLevel.Info)
+
+    def do_clear_card_data(self, menu_item):
+        util.log("Deleting all local card data", util.LogLevel.Info)
+        self.app.db.clear_card_data()
+        util.log("Done", util.LogLevel.Info)
