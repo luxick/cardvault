@@ -61,6 +61,7 @@ GENERIC_TREE_COLORS ={
 default_config = {
     "hide_duplicates_in_search": False,
     "start_page": "search",
+    "local_db": False,
     "log_level": 3,
     "legality_colors": {
         "Banned": "#C65642",

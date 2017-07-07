@@ -1,4 +1,5 @@
 import sqlite3
+import ast
 from mtgsdk import Card
 
 from cardvault import util
@@ -58,6 +59,59 @@ class CardVaultDB:
             util.log("Database Error", util.LogLevel.Error)
             util.log(str(err), util.LogLevel.Error)
 
+    def search_cards_by_name_filtered(self, term: str, filters: dict, list_size: int) -> dict:
+        """Search for cards based on the cards name with filter constrains"""
+        filter_rarity = filters["rarity"]
+        filer_type = filters["type"]
+        filter_set = filters["set"]
+        filter_mana = filters["mana"].split(',')
+
+        sql = 'SELECT * FROM cards WHERE `name` LIKE ?'
+        parameters = ['%' + term + '%']
+        if filter_rarity != "":
+            sql += ' AND `rarity` = ?'
+            parameters.append(filter_rarity)
+        if filer_type != "":
+            sql += ' AND `types` LIKE ?'
+            parameters.append(filer_type)
+        if filter_set != "":
+            sql += ' AND `set` = ?'
+            parameters.append(filter_set)
+        if len(filter_mana) != 0:
+            for color in filter_mana:
+                sql += ' AND `manaCost` LIKE ?'
+                parameters.append('%'+color+'%')
+        sql += ' LIMIT ?'
+        parameters.append(list_size)
+
+        con = sqlite3.connect(self.db_file)
+        cur = con.cursor()
+        cur.row_factory = sqlite3.Row
+        cur.execute(sql, parameters)
+        rows = cur.fetchall()
+        con.close()
+
+        output = {}
+        for row in rows:
+            card = self.table_to_card_mapping(row)
+            output[card.multiverse_id] = card
+        return output
+
+    def search_cards_by_name(self, term: str) -> dict:
+        """Search for cards based on the cards name"""
+        con = sqlite3.connect(self.db_file)
+        cur = con.cursor()
+        cur.row_factory = sqlite3.Row
+        cur.execute("SELECT * FROM cards WHERE `name` LIKE ? LIMIT 50", ('%'+term+'%', ))
+        rows = cur.fetchall()
+        con.close()
+
+        output = {}
+        for row in rows:
+            card = self.table_to_card_mapping(row)
+            output[card.multiverse_id] = card
+        return output
+
     @staticmethod
     def card_to_table_mapping(card: Card):
         """Return the database representation of a card object"""
@@ -73,3 +127,56 @@ class CardVaultDB:
                 str(card.original_type), str(card.source), str(card.image_url), str(card.set), str(card.set_name),
                 str(card.id),
                 str(card.legalities), str(card.rulings), str(card.foreign_names))
+
+    @staticmethod
+    def table_to_card_mapping(row: sqlite3.Row):
+        """Return card object representation of a table row"""
+        card = Card()
+        card.multiverse_id = row["multiverseid"]
+        tmp = row["name"]
+        card.name = tmp
+        card.layout = row["layout"]
+        card.mana_cost = row["manacost"]
+        card.cmc = row["cmc"]
+        card.colors = row["colors"]
+        card.type = row["type"]
+        card.rarity = row["rarity"]
+        card.text = row["text"]
+        card.flavor = row["flavor"]
+        card.artist = row["artist"]
+        card.number = row["number"]
+        card.power = row["power"]
+        card.toughness = row["toughness"]
+        card.loyalty = row["loyalty"]
+        card.watermark = row["watermark"]
+        card.border = row["border"]
+        card.hand = row["hand"]
+        card.life = row["life"]
+        card.release_date = row["releaseDate"]
+        card.starter = row["starter"]
+        card.original_text = row["originalText"]
+        card.original_type = row["originalType"]
+        card.source = row["source"]
+        card.image_url = row["imageUrl"]
+        card.set = row["set"]
+        card.set_name = row["setName"]
+        card.id = row["id"]
+
+        # Bool attributes
+        card.timeshifted = ast.literal_eval(row["timeshifted"])
+
+        # List attributes
+        card.names = ast.literal_eval(row["names"])
+        card.supertypes = ast.literal_eval(row["supertypes"])
+        card.subtypes = ast.literal_eval(row["subtypes"])
+        card.types = ast.literal_eval(row["types"])
+        card.printings = ast.literal_eval(row["printings"])
+        card.variations = ast.literal_eval(row["variations"])
+
+        # Dict attributes
+        card.legalities = ast.literal_eval(row["legalities"])
+        card.rulings = ast.literal_eval(row["rulings"])
+        card.foreign_names = ast.literal_eval(row["foreignNames"])
+
+        return card
+

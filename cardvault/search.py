@@ -205,42 +205,53 @@ class SearchHandlers:
         return output
 
     def search_cards(self, term: str, filters: dict) -> dict:
-        util.log("Starting online search for '" + term + "'", util.LogLevel.Info)
-        util.log("Used Filters: " + str(filters), util.LogLevel.Info)
-
-        # Load card info from internet
-        try:
-            util.log("Fetching card info ...", util.LogLevel.Info)
+        """Return a dict of cards based on a search term and filters"""
+        # Check if a local database can be used for searching
+        if self.app.config["local_db"]:
+            util.log("Starting local search for '" + term + "'", util.LogLevel.Info)
             start = time.time()
-            cards = Card.where(name=term) \
-                .where(colorIdentity=filters["mana"]) \
-                .where(types=filters["type"]) \
-                .where(set=filters["set"]) \
-                .where(rarity=filters["rarity"]) \
-                .where(pageSize=50) \
-                .where(page=1).all()
+
+            cards = self.app.db.search_cards_by_name_filtered(term, filters, 100)
+
             end = time.time()
             util.log("Card info fetched in {}s".format(round(end - start, 3)), util.LogLevel.Info)
-        except (URLError, HTTPError) as err:
-            util.log(err, util.LogLevel.Error)
-            return {}
+
+        else:
+            util.log("Starting online search for '" + term + "'", util.LogLevel.Info)
+            util.log("Used Filters: " + str(filters), util.LogLevel.Info)
+
+            # Load card info from internet
+            try:
+                util.log("Fetching card info ...", util.LogLevel.Info)
+                start = time.time()
+                data = Card.where(name=term) \
+                    .where(colorIdentity=filters["mana"]) \
+                    .where(types=filters["type"]) \
+                    .where(set=filters["set"]) \
+                    .where(rarity=filters["rarity"]) \
+                    .where(pageSize=50) \
+                    .where(page=1).all()
+                end = time.time()
+                util.log("Card info fetched in {}s".format(round(end - start, 3)), util.LogLevel.Info)
+            except (URLError, HTTPError) as err:
+                util.log(err, util.LogLevel.Error)
+                return {}
+
+            # Remove duplicate entries
+            if util.SHOW_FROM_ALL_SETS is False:
+                data = self._remove_duplicates(data)
+            # Pack results in a dictionary
+            cards = {}
+            for card in data:
+                cards[card.multiverse_id] = card
 
         # Check if results were found
         if len(cards) == 0:
             # TODO UI show no cards found
             util.log("No Cards found", util.LogLevel.Info)
             return {}
-
         util.log("Found " + str(len(cards)) + " cards", util.LogLevel.Info)
-        # Remove duplicate entries
-        if util.SHOW_FROM_ALL_SETS is False:
-            cards = self._remove_duplicates(cards)
-
-        # Pack results in a dictionary
-        lib = {}
-        for card in cards:
-            lib[card.multiverse_id] = card
-        return lib
+        return cards
 
     # ---------------------------------Search Tree----------------------------------------------
 
