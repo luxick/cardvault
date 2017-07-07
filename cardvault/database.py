@@ -1,5 +1,8 @@
 import sqlite3
 import ast
+
+from pygments.lexers.robotframework import _Table
+
 from mtgsdk import Card
 
 from cardvault import util
@@ -29,6 +32,8 @@ class CardVaultDB:
                         "`legalities` TEXT, `rulings` TEXT, `foreignNames` TEXT, "
                         "PRIMARY KEY(`multiverseid`) )")
             con.execute("CREATE TABLE IF NOT EXISTS library ( multiverse_id INT PRIMARY KEY, copies INT )")
+            con.execute("CREATE TABLE IF NOT EXISTS tags ( tag TEXT, multiverseid INT )")
+            con.execute("CREATE TABLE IF NOT EXISTS wants ( listName TEXT, multiverseid INT )")
 
     def insert_card(self, card: Card):
         # Connect to database
@@ -55,6 +60,17 @@ class CardVaultDB:
         try:
             with con:
                 con.execute("DELETE FROM cards")
+        except sqlite3.OperationalError as err:
+            util.log("Database Error", util.LogLevel.Error)
+            util.log(str(err), util.LogLevel.Error)
+
+    def clear_database(self):
+        con = sqlite3.connect(self.db_file)
+        try:
+            with con:
+                con.execute('DELETE FROM library')
+                con.execute('DELETE FROM wants')
+                con.execute('DELETE FROM tags')
         except sqlite3.OperationalError as err:
             util.log("Database Error", util.LogLevel.Error)
             util.log(str(err), util.LogLevel.Error)
@@ -106,11 +122,164 @@ class CardVaultDB:
         rows = cur.fetchall()
         con.close()
 
+        return self.rows_to_card_dict(rows)
+
+    def add_card_to_lib(self, card: Card):
+        """Insert card into library"""
+        con = sqlite3.connect(self.db_file)
+        try:
+            with con:
+                con.execute("INSERT INTO `library` (`copies`, `multiverseid`) VALUES (?, ?)", (1, card.multiverse_id))
+        except sqlite3.OperationalError as err:
+            util.log("Database Error", util.LogLevel.Error)
+            util.log(str(err), util.LogLevel.Error)
+
+    def get_library(self) -> dict:
+        """Load library from database"""
+        con = sqlite3.connect(self.db_file)
+        cur = con.cursor()
+        cur.row_factory = sqlite3.Row
+        cur.execute('SELECT * FROM `library` INNER JOIN `cards` ON library.multiverseid = cards.multiverseid')
+        rows = cur.fetchall()
+        con.close()
+
+        return self.rows_to_card_dict(rows)
+
+    def get_tags(self):
+        """Loads a dict from database with all tags and the card ids tagged"""
+        con = sqlite3.connect(self.db_file)
+        cur = con.cursor()
+        cur.row_factory = sqlite3.Row
+
+        # First load all tags
+        cur.execute("SELECT `tag` FROM tags GROUP BY `tag`")
+        rows = cur.fetchall()
+        tags = {}
+        for row in rows:
+            tags[row["tag"]] = []
+
+        # Go trough all tags an load the card ids
+        for tag in tags.keys():
+            cur.execute('SELECT `multiverseid` FROM `tags` WHERE tags.tag = ? AND multiverseid NOT NULL', (tag, ))
+            rows = cur.fetchall()
+            for row in rows:
+                tags[tag].append(row["multiverseid"])
+
+        return tags
+
+    def add_tag(self, tag: str):
+        """Add a new tag to the database"""
+        con = sqlite3.connect(self.db_file)
+        try:
+            with con:
+                con.execute("INSERT INTO `tags` VALUES (?, NULL)", (tag, ))
+        except sqlite3.OperationalError as err:
+            util.log("Database Error", util.LogLevel.Error)
+            util.log(str(err), util.LogLevel.Error)
+
+    def tag_card(self, tag: str, card_id: int):
+        """Add an entry for a tagged card"""
+        con = sqlite3.connect(self.db_file)
+        try:
+            with con:
+                con.execute("INSERT INTO `tags` VALUES (?, ?)", (tag, card_id))
+        except sqlite3.OperationalError as err:
+            util.log("Database Error", util.LogLevel.Error)
+            util.log(str(err), util.LogLevel.Error)
+
+    def rows_to_card_dict(self, rows):
+        """Convert database rows to a card dict"""
         output = {}
         for row in rows:
             card = self.table_to_card_mapping(row)
             output[card.multiverse_id] = card
         return output
+
+    def add_wants_list(self, name: str):
+        """Add a new wants list to the database"""
+        con = sqlite3.connect(self.db_file)
+        try:
+            with con:
+                con.execute("INSERT INTO `wants` VALUES (?, NULL)", (name,))
+        except sqlite3.OperationalError as err:
+            util.log("Database Error", util.LogLevel.Error)
+            util.log(str(err), util.LogLevel.Error)
+
+    def add_card_to_wants(self, list_name: str, card_id: int):
+        """Add a card entry to a wants list"""
+        con = sqlite3.connect(self.db_file)
+        try:
+            with con:
+                con.execute("INSERT INTO `wants` VALUES (?, ?)", (list_name, card_id))
+        except sqlite3.OperationalError as err:
+            util.log("Database Error", util.LogLevel.Error)
+            util.log(str(err), util.LogLevel.Error)
+
+    def get_wants(self):
+        """Load all wants lists from database"""
+        con = sqlite3.connect(self.db_file)
+        cur = con.cursor()
+        cur.row_factory = sqlite3.Row
+
+        # First load all lists
+        cur.execute("SELECT `listName` FROM wants GROUP BY `listName`")
+        rows = cur.fetchall()
+        wants = {}
+        for row in rows:
+            wants[row["listName"]] = []
+
+        # Go trough all tags an load the card ids
+        for list_name in wants.keys():
+            cur.execute('SELECT * FROM '
+                        '(SELECT `multiverseid` FROM `wants` WHERE `listName` = ? AND multiverseid NOT NULL) tagged '
+                        'INNER JOIN `cards` ON tagged.multiverseid = cards.multiverseid', (list_name, ))
+            rows = cur.fetchall()
+            for row in rows:
+                wants[list_name].append(self.table_to_card_mapping(row))
+
+        return wants
+
+    def save_library(self, cards: dict):
+        """Updates the library, adds new cards"""
+        con = sqlite3.connect(self.db_file)
+        try:
+            with con:
+                for multiverse_id in cards.keys():
+                    con.execute('UPDATE `library` SET `copies`=?, `multiverseid`=? WHERE multiverseid = ?;', (1, multiverse_id, multiverse_id))
+                    con.execute('INSERT INTO `library` (`copies`, `multiverseid`) '
+                                'SELECT ?,? WHERE (Select Changes() = 0);', (1, multiverse_id))
+        except sqlite3.OperationalError as err:
+            util.log("Database Error", util.LogLevel.Error)
+            util.log(str(err), util.LogLevel.Error)
+
+    def save_tags(self, tags: dict):
+        """Updates the tags table"""
+        con = sqlite3.connect(self.db_file)
+        try:
+            with con:
+                for tag, id_list in tags.items():
+                    for id in id_list:
+                        con.execute('UPDATE `tags` SET `tag`=?, `multiverseid`=? WHERE tags.multiverseid = ?;', (tag, id, id))
+                        con.execute('INSERT INTO `tags` (`tag`, `multiverseid`) '
+                                    'SELECT ?,? WHERE (Select Changes() = 0);', (tag, id))
+        except sqlite3.OperationalError as err:
+            util.log("Database Error", util.LogLevel.Error)
+            util.log(str(err), util.LogLevel.Error)
+
+    def save_wants(self, wants: dict):
+        """Updates the wants table"""
+        con = sqlite3.connect(self.db_file)
+        try:
+            with con:
+                for name, cards in wants.items():
+                    for card in cards:
+                        con.execute('UPDATE `wants` SET `listName`=?, `multiverseid`=? WHERE wants.multiverseid = ?;',
+                                    (name, card.multiverse_id, card.multiverse_id))
+                        con.execute('INSERT INTO `wants` (`listName`, `multiverseid`) '
+                                    'SELECT ?,? WHERE (Select Changes() = 0);', (name, card.multiverse_id))
+        except sqlite3.OperationalError as err:
+            util.log("Database Error", util.LogLevel.Error)
+            util.log(str(err), util.LogLevel.Error)
 
     @staticmethod
     def card_to_table_mapping(card: Card):

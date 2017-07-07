@@ -26,7 +26,7 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
     # --------------------------------- Main Window Handlers ----------------------------------------------
 
     def do_save_library(self, item):
-        self.app.save_library()
+        self.app.save_data()
 
     def do_export_library(self, item):
         dialog = Gtk.FileChooserDialog("Export Library", self.app.ui.get_object("mainWindow"),
@@ -88,19 +88,32 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
             response = self.app.show_question_dialog("Unsaved Changes", "You have unsaved changes in your library. "
                                                                         "Save before exiting?")
             if response == Gtk.ResponseType.YES:
-                self.app.save_library()
+                self.app.save_data()
                 return False
             elif response == Gtk.ResponseType.CANCEL:
                 return True
 
     # ---------------------- Debug actions -------------------------------
 
-    def do_load_lib_to_db(self, menu_item):
+    def do_load_data_to_db(self, item):
         util.log("Attempt loading library to database", util.LogLevel.Info)
         start = datetime.datetime.now()
-        self.app.db.bulk_insert_card(self.app.library.values())
+
+        for card in self.app.library.values():
+            self.app.db.add_card_to_lib(card)
+
+        for tag, card_ids in self.app.tags.items():
+            self.app.db.add_tag(tag)
+            for card_id in card_ids:
+                self.app.db.tag_card(tag, card_id)
+
+        for list_name, cards in self.app.wants.items():
+            self.app.db.add_wants_list(list_name)
+            for card in cards:
+                self.app.db.add_card_to_wants(list_name, card.multiverse_id)
+
         end = datetime.datetime.now()
-        util.log("Finished in {}s".format(str(end-start)), util.LogLevel.Info)
+        util.log("Finished in {}s".format(str(end - start)), util.LogLevel.Info)
 
     def do_load_all_cards(self, menu_item):
         util.log("Attempt fetching all cards from Gatherer. This may take a while...", util.LogLevel.Info)
@@ -122,4 +135,9 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
     def do_clear_card_data(self, menu_item):
         util.log("Deleting all local card data", util.LogLevel.Info)
         self.app.db.clear_card_data()
+        util.log("Done", util.LogLevel.Info)
+
+    def do_clear_data(self, item):
+        util.log("Deleting all library data", util.LogLevel.Info)
+        self.app.db.clear_database()
         util.log("Done", util.LogLevel.Info)

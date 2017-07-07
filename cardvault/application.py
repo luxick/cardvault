@@ -14,6 +14,7 @@ import os
 import copy
 import re
 import mtgsdk
+import time
 from typing import Type, Dict, List
 
 from cardvault import handlers
@@ -69,7 +70,8 @@ class Application:
         self.library = Dict[str, Type[mtgsdk.Card]]
         self.tags = Dict[str, str]
         self.wants = Dict[str, List[Type[mtgsdk.Card]]]
-        self.load_library()
+
+        self.load_data()
 
         self.handlers = handlers.Handlers(self)
         self.ui.connect_signals(self.handlers)
@@ -191,41 +193,26 @@ class Application:
         else:
             return value
 
-    def save_library(self):
-        # Save library file
-        util.save_file(util.get_root_filename("library"), self.library)
-        # Save tags file
-        util.save_file(util.get_root_filename("tags"), self.tags)
-        # Save wants file
-        util.save_file(util.get_root_filename("wants"), self.wants)
+    def save_data(self):
+        util.log("Saving Data to database", util.LogLevel.Info)
+        start = time.time()
+        self.db.save_library(self.library)
+        self.db.save_tags(self.tags)
+        self.db.save_wants(self.wants)
+        end = time.time()
+        util.log("Finished in {}s".format(str(round(end - start, 3))), util.LogLevel.Info)
         self.unsaved_changes = False
-        self.push_status("Library saved")
+        self.push_status("All data saved.")
 
-    def load_library(self):
-        all_existing = True
-
-        # Load library file
-        self.library = util.load_file(util.get_root_filename("library"))
-        if not self.library:
-            all_existing = False
-            self.library = {}
-
-        # Load tags file
-        self.tags = util.load_file(util.get_root_filename("tags"))
-        if not self.tags:
-            all_existing = False
-            self.tags = {}
-
-        # Load wants lists
-        self.wants = util.load_file(util.get_root_filename("wants"))
-        if not self.wants:
-            all_existing = False
-            self.wants = {}
-
-        # If parts were missing save to create the files
-        if not all_existing:
-            self.save_library()
-        self.push_status("Library loaded")
+    def load_data(self):
+        util.log("Loading Data from database", util.LogLevel.Info)
+        start = time.time()
+        self.library = self.db.get_library()
+        self.tags = self.db.get_tags()
+        self.wants = self.db.get_wants()
+        end = time.time()
+        util.log("Finished in {}s".format(str(round(end-start, 3))), util.LogLevel.Info)
+        self.push_status("All data loaded.")
 
     def get_untagged_cards(self):
         lib = copy.copy(self.library)
@@ -364,6 +351,38 @@ class Application:
         else:
             return filter_text.lower() in model[iter][1].lower()
 
+    def load_data_legacy(self):
+        all_existing = True
+        # Load library file
+        self.library = util.load_file(util.get_root_filename("library"))
+        if not self.library:
+            all_existing = False
+            self.library = {}
+        # Load tags file
+        self.tags = util.load_file(util.get_root_filename("tags"))
+        if not self.tags:
+            all_existing = False
+            self.tags = {}
+        # Load wants lists
+        self.wants = util.load_file(util.get_root_filename("wants"))
+        if not self.wants:
+            all_existing = False
+            self.wants = {}
+        # If parts were missing save to create the files
+        if not all_existing:
+            self.save_library_legacy()
+        self.push_status("Library loaded")
+
+    def save_library_legacy(self):
+        # Save library file
+        util.save_file(util.get_root_filename("library"), self.library)
+        # Save tags file
+        util.save_file(util.get_root_filename("tags"), self.tags)
+        # Save wants file
+        util.save_file(util.get_root_filename("wants"), self.wants)
+
+        self.unsaved_changes = False
+        self.push_status("Library saved")
 
 def main():
     Application()

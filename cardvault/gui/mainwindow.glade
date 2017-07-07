@@ -166,12 +166,44 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkMenuItem" id="del_card_db">
+                      <object class="GtkMenuItem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Clear Card Data</property>
+                        <property name="label" translatable="yes">Clear DB Data</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="do_clear_card_data" swapped="no"/>
+                        <child type="submenu">
+                          <object class="GtkMenu">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <child>
+                              <object class="GtkMenuItem" id="del_data">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Clear Library Data</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="do_clear_data" swapped="no"/>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkMenuItem" id="del_cards">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Clear Card Data</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="do_clear_card_data" swapped="no"/>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="load_data_to_db">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Load Library to DB</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="do_load_data_to_db" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -181,15 +213,6 @@
                         <property name="label" translatable="yes">Load All Cards From Gatherer</property>
                         <property name="use_underline">True</property>
                         <signal name="activate" handler="do_load_all_cards" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="lib_to_db">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Load Library to DB</property>
-                        <property name="use_underline">True</property>
-                        <signal name="activate" handler="do_load_lib_to_db" swapped="no"/>
                       </object>
                     </child>
                   </object>
