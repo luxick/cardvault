@@ -7,16 +7,13 @@ import sys
 from urllib import request
 
 import gi
-import time
-
+from time import localtime, strftime, time
 gi.require_version('Gtk', '3.0')
 from gi.repository import GdkPixbuf, GLib
 import six.moves.cPickle as pickle
 from PIL import Image as PImage
 
 from urllib.request import Request, urlopen
-from urllib.error import HTTPError
-from urllib.parse import urlencode
 
 from mtgsdk import Set
 from mtgsdk import MtgException
@@ -109,16 +106,17 @@ class TerminalColors:
     UNDERLINE = '\033[4m'
 
 
-def log(message: str, log_level: LogLevel):
-    if log_level.value <= LOG_LEVEL:
-        level_string = "[" + log_level.name + "] "
-        if log_level.value == 2:
-            color = TerminalColors.WARNING
-        elif log_level.value == 1:
-            color = TerminalColors.BOLD + TerminalColors.FAIL
+def log(msg: str, ll: LogLevel):
+    if ll.value <= LOG_LEVEL:
+        lv = "[" + ll.name + "] "
+        if ll.value == 2:
+            c = TerminalColors.WARNING
+        elif ll.value == 1:
+            c = TerminalColors.BOLD + TerminalColors.FAIL
         else:
-            color = ""
-        print(color + level_string + message+TerminalColors.ENDC)
+            c = ""
+        tc = strftime("%H:%M:%S ", localtime())
+        print(c + lv + tc + msg + TerminalColors.ENDC)
 
 
 def parse_config(filename: str, default: dict):
@@ -225,9 +223,9 @@ def load_mana_icons(path: str) -> dict:
 def net_load_set_list() -> dict:
     """ Load the list of all MTG sets from the Gather"""
     try:
-        start = time.time()
+        start = time()
         sets = Set.all()
-        stop = time.time()
+        stop = time()
         log("Fetched set list in {}s".format(round(stop-start, 3)), LogLevel.Info)
     except MtgException as err:
         log(str(err), LogLevel.Error)
