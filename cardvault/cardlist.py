@@ -16,7 +16,7 @@ gi.require_version('Gdk', '3.0')
 class CardList(Gtk.ScrolledWindow):
     def __init__(self, filtered, app: 'application.Application', row_colors: Dict[str, str]):
         Gtk.ScrolledWindow.__init__(self)
-        self.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        #self.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         self.set_hexpand(True)
         self.set_vexpand(True)
 

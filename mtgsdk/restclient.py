@@ -10,7 +10,7 @@
 
 import json
 from urllib.request import Request, urlopen
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 
 
@@ -37,6 +37,8 @@ class RestClient(object):
             return response
         except HTTPError as err:
             raise MtgException(err.read())
+        except URLError as err:
+            raise MtgException(str(err.reason))
 
 
 class MtgException(Exception):

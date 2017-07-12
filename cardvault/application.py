@@ -158,15 +158,24 @@ class Application:
 
         window.connect("key-press-event", eval_key_pressed)
 
-    def show_question_dialog(self, title, message):
-        dialog = Gtk.MessageDialog(self.ui.get_object("mainWindow"), 0, Gtk.MessageType.WARNING,
-                                   Gtk.ButtonsType.NONE, title)
-        dialog.add_buttons(Gtk.STOCK_YES, Gtk.ResponseType.YES,
-                           Gtk.STOCK_NO, Gtk.ResponseType.NO,
-                           Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
-        dialog.format_secondary_text(message)
+    def show_dialog_yes_no_cancel(self, title: str, message: str) -> Gtk.ResponseType:
+        """Display a simple Yes/No Question dialog and return the result"""
+        dialog = self.ui.get_object("ync_dialog")
+        dialog.set_transient_for(self.ui.get_object("mainWindow"))
+        dialog.set_title(title)
+        self.ui.get_object("ync_label").set_text(message)
         response = dialog.run()
-        dialog.destroy()
+        dialog.hide()
+        return response
+
+    def show_dialog_yes_no(self, title: str, message: str) -> Gtk.ResponseType:
+        """Display a simple Yes/No Question dialog and return the result"""
+        dialog = self.ui.get_object("yn_dialog")
+        dialog.set_transient_for(self.ui.get_object("mainWindow"))
+        dialog.set_title(title)
+        self.ui.get_object("yn_label").set_text(message)
+        response = dialog.run()
+        dialog.hide()
         return response
 
     def show_message(self, title, message):

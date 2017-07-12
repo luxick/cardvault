@@ -89,7 +89,7 @@ class CardVaultDB:
             parameters.append(filter_rarity)
         if filer_type != "":
             sql += ' AND `types` LIKE ?'
-            parameters.append(filer_type)
+            parameters.append('%'+filer_type+'%')
         if filter_set != "":
             sql += ' AND `set` = ?'
             parameters.append(filter_set)

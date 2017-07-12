@@ -15,7 +15,19 @@ from cardvault import util
 class SearchHandlers:
     def __init__(self, app: 'application.Application'):
         self.app = app
-        self.init_search_view()
+
+        # set mana icons on filter buttons
+        buttons = [x for x in self.app.ui.get_object("manaFilterGrid").get_children()
+                   if isinstance(x, Gtk.ToggleButton)]
+        self._init_mana_buttons(buttons)
+        # set auto completion for filter entry
+        self._init_set_entry(self.app.ui.get_object("setEntry"))
+        # Fill rarity box
+        self._init_combo_box(self.app.ui.get_object("rarityCombo"), util.rarity_dict.keys())
+        # Fill type box
+        self._init_combo_box(self.app.ui.get_object("typeCombo"), util.card_types)
+        # Create Model for search results
+        self._init_results_tree()
 
     def do_search_cards(self, sender):
         search_term = self.app.ui.get_object("searchEntry").get_text()
@@ -158,20 +170,6 @@ class SearchHandlers:
         for card in cards.values():
             self.app.add_card_to_lib(card)
         self.reload_search_view()
-
-    def init_search_view(self):
-        # set mana icons on filter buttons
-        buttons = [x for x in self.app.ui.get_object("manaFilterGrid").get_children()
-                   if isinstance(x, Gtk.ToggleButton)]
-        self._init_mana_buttons(buttons)
-        # set auto completion for filter entry
-        self._init_set_entry(self.app.ui.get_object("setEntry"))
-        # Fill rarity box
-        self._init_combo_box(self.app.ui.get_object("rarityCombo"), util.rarity_dict.keys())
-        # Fill type box
-        self._init_combo_box(self.app.ui.get_object("typeCombo"), util.card_types)
-        # Create Model for search results
-        self._init_results_tree()
 
     def reload_search_view(self):
         """ Reload the card tree """

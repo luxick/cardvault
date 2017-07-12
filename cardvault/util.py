@@ -14,6 +14,10 @@ from gi.repository import GdkPixbuf, GLib
 import six.moves.cPickle as pickle
 from PIL import Image as PImage
 
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError
+from urllib.parse import urlencode
+
 from mtgsdk import Set
 from mtgsdk import MtgException
 
@@ -42,6 +46,8 @@ LOG_LEVEL = 1
 
 # Name of the database
 DB_NAME = "cardvault.db"
+
+ALL_NUM_URL = 'https://api.magicthegathering.io/v1/cards?page=0&pageSize=100'
 
 # Colors for card rows in search view
 SEARCH_TREE_COLORS ={
@@ -354,5 +360,21 @@ def create_mana_icons(icons: dict, mana_string: str) -> GdkPixbuf:
         return
     return pixbuf
 
+
+def sizeof_fmt(num, suffix='B'):
+    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+        if abs(num) < 1024.0:
+            return "%3.1f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, 'Yi', suffix)
+
+
+def get_all_cards_num() -> int:
+    req = Request(ALL_NUM_URL, headers={'User-Agent': 'Mozilla/5.0'})
+    response = urlopen(req)
+    headers = response.info()._headers
+    for header, value in headers:
+        if header == 'Total-Count':
+            return int(value)
 # endregion
 

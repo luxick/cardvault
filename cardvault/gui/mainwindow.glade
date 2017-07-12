@@ -75,6 +75,21 @@
                       </object>
                     </child>
                     <child>
+                      <object class="GtkMenuItem" id="main_load_data">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Download Card Data</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="do_download_card_data" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkSeparatorMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkImageMenuItem" id="quitProgram">
                         <property name="label">gtk-quit</property>
                         <property name="visible">True</property>
@@ -129,6 +144,7 @@
                       <object class="GtkRadioMenuItem" id="decksViewItem">
                         <property name="name">decks</property>
                         <property name="visible">True</property>
+                        <property name="sensitive">False</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Decks</property>
                         <property name="use_underline">True</property>
@@ -204,15 +220,6 @@
                         <property name="label" translatable="yes">Load Library to DB</property>
                         <property name="use_underline">True</property>
                         <signal name="activate" handler="do_load_data_to_db" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkMenuItem" id="load_all_cards">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Load All Cards From Gatherer</property>
-                        <property name="use_underline">True</property>
-                        <signal name="activate" handler="do_load_all_cards" swapped="no"/>
                       </object>
                     </child>
                   </object>

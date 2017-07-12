@@ -1,12 +1,16 @@
 import gi
+import sys
+
+import math
+
 gi.require_version('Gtk', '3.0')
-import datetime
-import itertools
+import time, datetime
 import os
-from gi.repository import Gtk
+import threading
+from gi.repository import Gtk, GObject
 
 from cardvault import util, application
-from mtgsdk import Card
+from mtgsdk import Card, MtgException
 
 from search import SearchHandlers
 from library import LibraryHandlers
@@ -17,6 +21,8 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
     def __init__(self, app: 'application.Application'):
         """Initialize handlers for UI signals"""
         self.app = app
+        # Token to cancel a running download
+        self.cancel_token = False
 
         # Call constructor of view handlers classes
         SearchHandlers.__init__(self, app)
@@ -55,7 +61,7 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
             # Show confirmation message
-            override_question = self.app.show_question_dialog("Import Library",
+            override_question = self.app.show_dialog_yes_no_cancel("Import Library",
                                                               "Importing a library will override your current library. "
                                                               "Proceed?")
             if override_question == Gtk.ResponseType.YES:
@@ -85,13 +91,121 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
 
     def do_delete_event(self, arg1, arg2):
         if self.app.unsaved_changes:
-            response = self.app.show_question_dialog("Unsaved Changes", "You have unsaved changes in your library. "
+            response = self.app.show_dialog_yes_no_cancel("Unsaved Changes", "You have unsaved changes in your library. "
                                                                         "Save before exiting?")
             if response == Gtk.ResponseType.YES:
                 self.app.save_data()
                 return False
             elif response == Gtk.ResponseType.CANCEL:
                 return True
+
+    def do_cancel_download(self, item: Gtk.MenuItem):
+        """The cancel button was pressed, set cancel_token to stop download thread"""
+        self.cancel_token = True
+        # Delete Dialog
+        self.app.ui.get_object("loadDataDialog").destroy()
+        self.app.push_status("Download canceled")
+        util.log("Download canceled by user", util.LogLevel.Info)
+
+    def download_canceled(self):
+        """The download thread was canceled and finished executing"""
+        self.cancel_token = False
+        util.log("Download thread ended", util.LogLevel.Info)
+
+    def download_failed(self, err: MtgException):
+        # Delete Dialog
+        self.app.ui.get_object("loadDataDialog").destroy()
+        self.app.push_status("Download canceled")
+        self.app.show_message("Download Faild", str(err))
+
+    def download_finished(self):
+        """Download thread finished without errors"""
+        self.cancel_token = False
+        self.app.ui.get_object("loadDataDialog").destroy()
+        self.app.push_status("Card data downloaded")
+        util.log("Card data download finished", util.LogLevel.Info)
+
+    def do_download_card_data(self, item: Gtk.MenuItem):
+        """Download button was pressed in the menu bar. Starts a thread to load data from the internet"""
+        info_string = "Start downloading card information from the internet?\n" \
+                      "This process can take up to 10 minutes.\n" \
+                      "You can cancel the download at any point."
+        response = self.app.show_dialog_yes_no("Download Card Data", info_string)
+        if response == Gtk.ResponseType.NO:
+            return
+        # Launch download info dialog
+        dl_dialog = self.app.ui.get_object("loadDataDialog")
+        dl_dialog.set_transient_for(self.app.ui.get_object("mainWindow"))
+        dl_dialog.show()
+
+        # Hide Progress UI until download started
+        self.app.ui.get_object("dl_progress_bar").set_visible(False)
+        self.app.ui.get_object("dl_progress_label").set_visible(False)
+
+        # Create and start the download in a separate thread so it will not block the UI
+        thread = threading.Thread(target=self.load_thread)
+        thread.daemon = True
+        thread.start()
+        util.log("Attempt fetching all cards from Gatherer. This may take a while...", util.LogLevel.Info)
+
+    def load_thread(self):
+        """Worker thread to download info using the mtgsdk"""
+        all_cards = []
+        # Request total number of cards we are going to download
+        all_num = util.get_all_cards_num()
+        all_pages = int(math.ceil(all_num/100))
+
+        # Download cards in pages until no new cards are added
+        for i in range(all_pages):
+            req_start = time.time()
+            try:
+                new_cards = Card.where(page=i).where(pageSize=100).all()
+            except MtgException as err:
+                util.log(str(err), util.LogLevel.Error)
+                return
+            all_cards = all_cards + new_cards
+            req_end = time.time()
+
+            # Check if the action was canceled during download
+            if self.cancel_token:
+                GObject.idle_add(self.download_canceled)
+                return
+
+            # Activate download UI
+            self.app.ui.get_object("dl_spinner").set_visible(False)
+            self.app.ui.get_object("dl_progress_bar").set_visible(True)
+            self.app.ui.get_object("dl_progress_label").set_visible(True)
+            passed = str(round(req_end - req_start, 3))
+            GObject.idle_add(self.load_update_ui, all_cards, all_num, passed)
+
+        # All cards have been downloaded
+        GObject.idle_add(self.load_show_insert_ui, "Saving data to disk...")
+        self.app.db.bulk_insert_card(all_cards)
+
+        self.download_finished()
+
+    def load_update_ui(self, current_list: list, max_cards: int, time_passed: str):
+        """Called from withing the worker thread. Updates the download dialog with infos."""
+        # Get info widgets
+        info_label = self.app.ui.get_object("dl_info_label")
+        progress_label = self.app.ui.get_object("dl_progress_label")
+        bar = self.app.ui.get_object("dl_progress_bar")
+        # Compute numbers for display
+        size_human = util.sizeof_fmt(sys.getsizeof(current_list))
+        size_bytes = sys.getsizeof(current_list)
+        percent = len(current_list) / max_cards
+        # Update UI
+        info_label.set_text("Downloading Cards...")
+        progress_label.set_text("{:.1%} ({})".format(percent, size_human))
+        bar.set_fraction(percent)
+        util.log("Downloading: {:.1%} | {} Bytes | {}s".format(percent, size_bytes, time_passed), util.LogLevel.Info)
+
+    def load_show_insert_ui(self, info: str):
+        """Called from worker thread after download finished. Sets UI to display the passed string"""
+        self.app.ui.get_object("dl_info_label").set_text(info)
+        self.app.ui.get_object("dl_spinner").set_visible(True)
+        self.app.ui.get_object("dl_progress_bar").set_visible(False)
+        self.app.ui.get_object("dl_progress_label").set_visible(False)
 
     # ---------------------- Debug actions -------------------------------
 
@@ -114,23 +228,6 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
 
         end = datetime.datetime.now()
         util.log("Finished in {}s".format(str(end - start)), util.LogLevel.Info)
-
-    def do_load_all_cards(self, menu_item):
-        util.log("Attempt fetching all cards from Gatherer. This may take a while...", util.LogLevel.Info)
-        start = datetime.datetime.now()
-        all_cards = []
-        for i in itertools.count():
-            new_cards = Card.where(page=i).where(pageSize=100).all()
-            if len(new_cards) == 0:
-                break
-            all_cards = all_cards + new_cards
-            util.log("Fetched page {}, {} cards so far".format(str(i), str(len(all_cards))), util.LogLevel.Info)
-        end = datetime.datetime.now()
-        util.log("Finished fetching {} cards in {}".format(str(len(all_cards)), (end - start)), util.LogLevel.Info)
-
-        util.log("Inserting cards into library...", util.LogLevel.Info)
-        self.app.db.bulk_insert_card(all_cards)
-        util.log("Done", util.LogLevel.Info)
 
     def do_clear_card_data(self, menu_item):
         util.log("Deleting all local card data", util.LogLevel.Info)

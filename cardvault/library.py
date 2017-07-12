@@ -9,10 +9,25 @@ from cardvault import cardlist
 
 class LibraryHandlers:
     def __init__(self, app: 'application.Application'):
+        """Initialize the library view"""
         self.app = app
-        self.init_library_view()
+        # Create Tree View for library
+        container = self.app.ui.get_object("libraryContainer")
+        card_list = cardlist.CardList(True, self.app, util.GENERIC_TREE_COLORS)
+        card_list.set_name("libScroller")
+        # Show details
+        card_list.tree.connect("row-activated", self.on_library_card_selected)
+        # Show Context menu
+        card_list.tree.connect("button-press-event", self.on_library_tree_press_event)
+        card_list.filter.set_visible_func(self.app.filter_lib_func)
+        container.add(card_list)
+        container.add_overlay(self.app.ui.get_object("noResults"))
+        container.show_all()
+
+        self.app.ui.get_object("noResults").set_visible(False)
 
     def do_reload_library(self, view):
+        """Handler for the 'show' signal"""
         self.reload_library()
 
     def do_tag_entry_changed(self, entry):
@@ -155,23 +170,6 @@ class LibraryHandlers:
             return True
 
     # -------------------------- Class Functions -------------------------------
-
-    def init_library_view(self):
-        """Initialize the library view"""
-        # Create Tree View for library
-        container = self.app.ui.get_object("libraryContainer")
-        card_list = cardlist.CardList(True, self.app, util.GENERIC_TREE_COLORS)
-        card_list.set_name("libScroller")
-        # Show details
-        card_list.tree.connect("row-activated", self.on_library_card_selected)
-        # Show Context menu
-        card_list.tree.connect("button-press-event", self.on_library_tree_press_event)
-        card_list.filter.set_visible_func(self.app.filter_lib_func)
-        container.add(card_list)
-        container.add_overlay(self.app.ui.get_object("noResults"))
-        container.show_all()
-
-        self.app.ui.get_object("noResults").set_visible(False)
 
     def reload_library(self, tag="All"):
         if tag == "Untagged":
