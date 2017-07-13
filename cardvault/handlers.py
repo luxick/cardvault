@@ -52,6 +52,7 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
         dialog.destroy()
 
     def do_import_library(self, item):
+        """Called by menu item import library"""
         # Show file picker dialog for import
         dialog = Gtk.FileChooserDialog("Import Library", self.app.ui.get_object("mainWindow"),
                                        Gtk.FileChooserAction.OPEN,
@@ -61,19 +62,19 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
             # Show confirmation message
-            override_question = self.app.show_dialog_yes_no_cancel("Import Library",
-                                                              "Importing a library will override your current library. "
-                                                              "Proceed?")
+            override_question = self.app.show_dialog_yn(
+                "Import Library", "Importing a library will override your current library.\nProceed?")
             if override_question == Gtk.ResponseType.YES:
                 imports = util.import_library(dialog.get_filename())
                 self.app.library = imports[0]
                 self.app.tags = imports[1]
                 self.app.wants = imports[2]
+                # Save imported data to database
+                self.app.override_user_data()
                 # Cause current page to reload with imported data
                 self.app.current_page.emit('show')
-                self.app.unsaved_changes = True
-                self.app.push_status("Library imported")
         dialog.destroy()
+
 
     def on_view_changed(self, item):
         if item.get_active():
@@ -91,8 +92,9 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
 
     def do_delete_event(self, arg1, arg2):
         if self.app.unsaved_changes:
-            response = self.app.show_dialog_yes_no_cancel("Unsaved Changes", "You have unsaved changes in your library. "
-                                                                        "Save before exiting?")
+            response = self.app.show_dialog_ync("Unsaved Changes",
+                                                          "You have unsaved changes in your library. "
+                                                          "Save before exiting?")
             if response == Gtk.ResponseType.YES:
                 self.app.save_data()
                 return False
@@ -121,6 +123,8 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
     def download_finished(self):
         """Download thread finished without errors"""
         self.cancel_token = False
+        self.app.config["local_db"] = True
+        self.app.save_config()
         self.app.ui.get_object("loadDataDialog").destroy()
         self.app.push_status("Card data downloaded")
         util.log("Card data download finished", util.LogLevel.Info)
@@ -130,7 +134,7 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
         info_string = "Start downloading card information from the internet?\n" \
                       "This process can take up to 10 minutes.\n" \
                       "You can cancel the download at any point."
-        response = self.app.show_dialog_yes_no("Download Card Data", info_string)
+        response = self.app.show_dialog_yn("Download Card Data", info_string)
         if response == Gtk.ResponseType.NO:
             return
         # Launch download info dialog
@@ -153,7 +157,7 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
         all_cards = []
         # Request total number of cards we are going to download
         all_num = util.get_all_cards_num()
-        all_pages = int(math.ceil(all_num/100))
+        all_pages = int(math.ceil(all_num / 100))
 
         # Download cards in pages until no new cards are added
         for i in range(all_pages):
@@ -180,7 +184,7 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
 
         # All cards have been downloaded
         GObject.idle_add(self.load_show_insert_ui, "Saving data to disk...")
-        self.app.db.bulk_insert_card(all_cards)
+        self.app.db.db_card_insert_bulk(all_cards)
 
         self.download_finished()
 
@@ -209,32 +213,12 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
 
     # ---------------------- Debug actions -------------------------------
 
-    def do_load_data_to_db(self, item):
-        util.log("Attempt loading library to database", util.LogLevel.Info)
-        start = datetime.datetime.now()
-
-        for card in self.app.library.values():
-            self.app.db.add_card_to_lib(card)
-
-        for tag, card_ids in self.app.tags.items():
-            self.app.db.add_tag(tag)
-            for card_id in card_ids:
-                self.app.db.tag_card(tag, card_id)
-
-        for list_name, cards in self.app.wants.items():
-            self.app.db.add_wants_list(list_name)
-            for card in cards:
-                self.app.db.add_card_to_wants(list_name, card.multiverse_id)
-
-        end = datetime.datetime.now()
-        util.log("Finished in {}s".format(str(end - start)), util.LogLevel.Info)
-
     def do_clear_card_data(self, menu_item):
         util.log("Deleting all local card data", util.LogLevel.Info)
-        self.app.db.clear_card_data()
+        self.app.db.db_clear_data_card()
         util.log("Done", util.LogLevel.Info)
 
     def do_clear_data(self, item):
         util.log("Deleting all library data", util.LogLevel.Info)
-        self.app.db.clear_database()
+        self.app.db.db_clear_data_user()
         util.log("Done", util.LogLevel.Info)

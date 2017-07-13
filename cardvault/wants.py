@@ -21,7 +21,7 @@ class WantsHandlers:
         # Check if list name already exists
         if self.app.wants.__contains__(name):
             return
-        self.app.add_want_list(name)
+        self.app.wants_new(name)
         self.reload_wants_view()
 
     def on_want_list_selected(self, selection, path, column):
@@ -54,7 +54,7 @@ class WantsHandlers:
 
             new_name = self.app.show_name_enter_dialog("Rename Want List", tag)
             if not tag == new_name:
-                self.app.rename_want_list(tag, new_name)
+                self.app.wants_rename(tag, new_name)
                 self.app.current_page.emit('show')
 
     def do_delete_wants_list(self, tree):
@@ -63,7 +63,7 @@ class WantsHandlers:
             tree_iter = model.get_iter(path)
             name = model.get_value(tree_iter, 0)
 
-            self.app.delete_wants_list(name)
+            self.app.wants_delete(name)
             self.app.current_page.emit('show')
 
     def on_want_cards_add_activated(self, menu_item):
@@ -79,8 +79,8 @@ class WantsHandlers:
             list_name = model.get_value(tree_iter, 0)
 
             for card in selected.values():
-                self.app.add_card_to_lib(card)
-                self.app.remove_card_from_want_list(card, list_name)
+                self.app.lib_card_add(card)
+                self.app.wants_card_remove(card, list_name)
 
         self.reload_wants_view(list_name)
 
@@ -97,7 +97,7 @@ class WantsHandlers:
             list_name = model.get_value(tree_iter, 0)
 
             for card in selected.values():
-                self.app.remove_card_from_want_list(card, list_name)
+                self.app.wants_card_remove(card, list_name)
 
         self.reload_wants_view(list_name)
 

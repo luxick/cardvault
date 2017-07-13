@@ -83,7 +83,7 @@ class LibraryHandlers:
 
             new_name = self.app.show_name_enter_dialog("Rename Tag", tag)
             if new_name and new_name != "":
-                self.app.rename_tag(tag, new_name)
+                self.app.tag_rename(tag, new_name)
                 self.app.current_page.emit('show')
 
     def do_tag_list_delete(self, tree):
@@ -98,7 +98,7 @@ class LibraryHandlers:
             dialog.destroy()
             if response == Gtk.ResponseType.NO:
                 return
-            self.app.remove_tag(tag)
+            self.app.tag_delete(tag)
             self.app.current_page.emit('show')
 
     def do_refilter_library(self, container):
@@ -139,7 +139,7 @@ class LibraryHandlers:
         cards = card_list.get_selected_cards()
         # Remove selected cards
         for card in cards.values():
-            self.app.remove_card_from_lib(card)
+            self.app.lib_card_remove(card)
         self.reload_library(self.app.current_lib_tag)
         self.reload_tag_list(none_selected=True)
 
@@ -191,7 +191,7 @@ class LibraryHandlers:
             self.app.ui.get_object("noResults").set_visible(True)
 
     def add_new_tag(self, name):
-        self.app.add_tag(name)
+        self.app.tag_new(name)
         self.reload_tag_list(True)
 
     def reload_tag_list(self, none_selected=False):
@@ -209,7 +209,7 @@ class LibraryHandlers:
     def tag_cards(self, card_list, tag):
         # Check if tag exist and create if necessary
         if not self.app.tags.__contains__(tag):
-            self.app.add_tag(tag)
+            self.app.tag_new(tag)
 
         for card in card_list.values():
             if not self.app.tags[tag].__contains__(card.multiverse_id):

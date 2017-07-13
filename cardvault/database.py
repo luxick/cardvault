@@ -1,10 +1,7 @@
 import sqlite3
 import ast
 
-from pygments.lexers.robotframework import _Table
-
 from mtgsdk import Card
-
 from cardvault import util
 
 
@@ -13,7 +10,9 @@ class CardVaultDB:
     def __init__(self, db_file: str):
         self.db_file = db_file
 
-    def create_database(self):
+    # Database operations ##############################################################################################
+
+    def db_create(self):
         """Create initial database"""
         con = sqlite3.connect(self.db_file)
 
@@ -35,7 +34,7 @@ class CardVaultDB:
             con.execute("CREATE TABLE IF NOT EXISTS tags ( tag TEXT, multiverseid INT )")
             con.execute("CREATE TABLE IF NOT EXISTS wants ( listName TEXT, multiverseid INT )")
 
-    def insert_card(self, card: Card):
+    def db_card_insert(self, card: Card):
         # Connect to database
         con = sqlite3.connect(self.db_file)
         try:
@@ -51,90 +50,37 @@ class CardVaultDB:
         except sqlite3.IntegrityError:
             pass
 
-    def bulk_insert_card(self, card_list: list):
+    def db_card_insert_bulk(self, card_list: list):
         for card in card_list:
-            self.insert_card(card)
+            self.db_card_insert(card)
 
-    def clear_card_data(self):
-        con = sqlite3.connect(self.db_file)
-        try:
-            with con:
-                con.execute("DELETE FROM cards")
-        except sqlite3.OperationalError as err:
-            util.log("Database Error", util.LogLevel.Error)
-            util.log(str(err), util.LogLevel.Error)
-
-    def clear_database(self):
-        con = sqlite3.connect(self.db_file)
-        try:
-            with con:
-                con.execute('DELETE FROM library')
-                con.execute('DELETE FROM wants')
-                con.execute('DELETE FROM tags')
-        except sqlite3.OperationalError as err:
-            util.log("Database Error", util.LogLevel.Error)
-            util.log(str(err), util.LogLevel.Error)
-
-    def search_cards_by_name_filtered(self, term: str, filters: dict, list_size: int) -> dict:
-        """Search for cards based on the cards name with filter constrains"""
-        filter_rarity = filters["rarity"]
-        filer_type = filters["type"]
-        filter_set = filters["set"]
-        filter_mana = filters["mana"].split(',')
-
-        sql = 'SELECT * FROM cards WHERE `name` LIKE ?'
-        parameters = ['%' + term + '%']
-        if filter_rarity != "":
-            sql += ' AND `rarity` = ?'
-            parameters.append(filter_rarity)
-        if filer_type != "":
-            sql += ' AND `types` LIKE ?'
-            parameters.append('%'+filer_type+'%')
-        if filter_set != "":
-            sql += ' AND `set` = ?'
-            parameters.append(filter_set)
-        if len(filter_mana) != 0:
-            for color in filter_mana:
-                sql += ' AND `manaCost` LIKE ?'
-                parameters.append('%'+color+'%')
-        sql += ' LIMIT ?'
-        parameters.append(list_size)
-
+    def db_get_all(self):
+        sql = 'SELECT * FROM cards'
         con = sqlite3.connect(self.db_file)
         cur = con.cursor()
         cur.row_factory = sqlite3.Row
-        cur.execute(sql, parameters)
+        cur.execute(sql)
         rows = cur.fetchall()
         con.close()
-
-        output = {}
+        output = []
         for row in rows:
             card = self.table_to_card_mapping(row)
-            output[card.multiverse_id] = card
+            output.append(card)
         return output
 
-    def search_cards_by_name(self, term: str) -> dict:
-        """Search for cards based on the cards name"""
-        con = sqlite3.connect(self.db_file)
-        cur = con.cursor()
-        cur.row_factory = sqlite3.Row
-        cur.execute("SELECT * FROM cards WHERE `name` LIKE ? LIMIT 50", ('%'+term+'%', ))
-        rows = cur.fetchall()
-        con.close()
+    def db_clear_data_card(self):
+        """Delete all resource data from database"""
+        self.db_operation("DELETE FROM cards")
 
-        return self.rows_to_card_dict(rows)
+    def db_clear_data_user(self):
+        """Delete all user data from database"""
+        self.db_operation('DELETE FROM library')
+        self.db_operation('DELETE FROM wants')
+        self.db_operation('DELETE FROM tags')
 
-    def add_card_to_lib(self, card: Card):
-        """Insert card into library"""
-        con = sqlite3.connect(self.db_file)
-        try:
-            with con:
-                con.execute("INSERT INTO `library` (`copies`, `multiverseid`) VALUES (?, ?)", (1, card.multiverse_id))
-        except sqlite3.OperationalError as err:
-            util.log("Database Error", util.LogLevel.Error)
-            util.log(str(err), util.LogLevel.Error)
+    # Library operations ###############################################################################################
 
-    def get_library(self) -> dict:
+    def lib_get_all(self) -> dict:
         """Load library from database"""
         con = sqlite3.connect(self.db_file)
         cur = con.cursor()
@@ -145,7 +91,17 @@ class CardVaultDB:
 
         return self.rows_to_card_dict(rows)
 
-    def get_tags(self):
+    def lib_card_add(self, card: Card):
+        """Insert card into library"""
+        self.db_operation("INSERT INTO `library` (`copies`, `multiverseid`) VALUES (?, ?)", (1, card.multiverse_id))
+
+    def lib_card_remove(self, card: Card):
+        """Remove a from the library"""
+        self.db_operation("DELETE FROM `library` WHERE `multiverseid` = ?", (card.multiverse_id,))
+
+    # Tag operations ###################################################################################################
+
+    def tag_get_all(self) -> dict:
         """Loads a dict from database with all tags and the card ids tagged"""
         con = sqlite3.connect(self.db_file)
         cur = con.cursor()
@@ -160,62 +116,51 @@ class CardVaultDB:
 
         # Go trough all tags an load the card ids
         for tag in tags.keys():
-            cur.execute('SELECT `multiverseid` FROM `tags` WHERE tags.tag = ? AND multiverseid NOT NULL', (tag, ))
+            cur.execute('SELECT `multiverseid` FROM `tags` WHERE tags.tag = ? AND multiverseid NOT NULL', (tag,))
             rows = cur.fetchall()
             for row in rows:
                 tags[tag].append(row["multiverseid"])
-
         return tags
 
-    def add_tag(self, tag: str):
+    def tag_new(self, tag: str):
         """Add a new tag to the database"""
-        con = sqlite3.connect(self.db_file)
-        try:
-            with con:
-                con.execute("INSERT INTO `tags` VALUES (?, NULL)", (tag, ))
-        except sqlite3.OperationalError as err:
-            util.log("Database Error", util.LogLevel.Error)
-            util.log(str(err), util.LogLevel.Error)
+        self.db_operation("INSERT INTO `tags` VALUES (?, NULL)", (tag,))
 
-    def tag_card(self, tag: str, card_id: int):
+    def tag_delete(self, tag: str):
+        """Remove a tag with all entries"""
+        self.db_operation("DELETE FROM `tags` WHERE `tag` = ?", (tag,))
+
+    def tag_rename(self, name_old: str, name_new: str):
+        """Rename a tag"""
+        self.db_operation('UPDATE `tags` SET `tag`=? WHERE `tag` = ?;', (name_new, name_old))
+
+    def tag_card_add(self, tag: str, card_id: int):
         """Add an entry for a tagged card"""
+        self.db_operation("INSERT INTO `tags` VALUES (?, ?)", (tag, card_id))
+
+    def tag_card_remove(self, tag: str, card_id: int):
+        """Remove a card from a tag"""
+        self.db_operation("DELETE FROM `tags` WHERE `tag` = ? AND `multiverseid` = ?", (tag, card_id))
+
+    def tag_card_check_tagged(self, card) -> tuple:
+        """Check if a card is tagged. Return True/False and a list of tags."""
         con = sqlite3.connect(self.db_file)
-        try:
-            with con:
-                con.execute("INSERT INTO `tags` VALUES (?, ?)", (tag, card_id))
-        except sqlite3.OperationalError as err:
-            util.log("Database Error", util.LogLevel.Error)
-            util.log(str(err), util.LogLevel.Error)
+        cur = con.cursor()
+        cur.row_factory = sqlite3.Row
+        cur.execute('SELECT `tag` FROM `tags` WHERE tags.multiverseid = ? ', (card.multiverse_id,))
+        rows = cur.fetchall()
 
-    def rows_to_card_dict(self, rows):
-        """Convert database rows to a card dict"""
-        output = {}
-        for row in rows:
-            card = self.table_to_card_mapping(row)
-            output[card.multiverse_id] = card
-        return output
+        if len(rows) == 0:
+            return False, []
+        else:
+            tags = []
+            for row in rows:
+                tags.append(row["tag"])
+            return True, tags
 
-    def add_wants_list(self, name: str):
-        """Add a new wants list to the database"""
-        con = sqlite3.connect(self.db_file)
-        try:
-            with con:
-                con.execute("INSERT INTO `wants` VALUES (?, NULL)", (name,))
-        except sqlite3.OperationalError as err:
-            util.log("Database Error", util.LogLevel.Error)
-            util.log(str(err), util.LogLevel.Error)
+    # Wants operations #################################################################################################
 
-    def add_card_to_wants(self, list_name: str, card_id: int):
-        """Add a card entry to a wants list"""
-        con = sqlite3.connect(self.db_file)
-        try:
-            with con:
-                con.execute("INSERT INTO `wants` VALUES (?, ?)", (list_name, card_id))
-        except sqlite3.OperationalError as err:
-            util.log("Database Error", util.LogLevel.Error)
-            util.log(str(err), util.LogLevel.Error)
-
-    def get_wants(self):
+    def wants_get_all(self) -> dict:
         """Load all wants lists from database"""
         con = sqlite3.connect(self.db_file)
         cur = con.cursor()
@@ -232,51 +177,99 @@ class CardVaultDB:
         for list_name in wants.keys():
             cur.execute('SELECT * FROM '
                         '(SELECT `multiverseid` FROM `wants` WHERE `listName` = ? AND multiverseid NOT NULL) tagged '
-                        'INNER JOIN `cards` ON tagged.multiverseid = cards.multiverseid', (list_name, ))
+                        'INNER JOIN `cards` ON tagged.multiverseid = cards.multiverseid', (list_name,))
             rows = cur.fetchall()
             for row in rows:
                 wants[list_name].append(self.table_to_card_mapping(row))
-
         return wants
 
-    def save_library(self, cards: dict):
-        """Updates the library, adds new cards"""
-        con = sqlite3.connect(self.db_file)
-        try:
-            with con:
-                for multiverse_id in cards.keys():
-                    con.execute('UPDATE `library` SET `copies`=?, `multiverseid`=? WHERE multiverseid = ?;', (1, multiverse_id, multiverse_id))
-                    con.execute('INSERT INTO `library` (`copies`, `multiverseid`) '
-                                'SELECT ?,? WHERE (Select Changes() = 0);', (1, multiverse_id))
-        except sqlite3.OperationalError as err:
-            util.log("Database Error", util.LogLevel.Error)
-            util.log(str(err), util.LogLevel.Error)
+    def wants_new(self, name: str):
+        """Add a new wants list to the database"""
+        self.db_operation("INSERT INTO `wants` VALUES (?, NULL)", (name,))
 
-    def save_tags(self, tags: dict):
-        """Updates the tags table"""
-        con = sqlite3.connect(self.db_file)
-        try:
-            with con:
-                for tag, id_list in tags.items():
-                    for id in id_list:
-                        con.execute('UPDATE `tags` SET `tag`=?, `multiverseid`=? WHERE tags.multiverseid = ?;', (tag, id, id))
-                        con.execute('INSERT INTO `tags` (`tag`, `multiverseid`) '
-                                    'SELECT ?,? WHERE (Select Changes() = 0);', (tag, id))
-        except sqlite3.OperationalError as err:
-            util.log("Database Error", util.LogLevel.Error)
-            util.log(str(err), util.LogLevel.Error)
+    def wants_delete(self, name: str):
+        """Remove a tag with all entries"""
+        self.db_operation("DELETE FROM `wants` WHERE `listName` = ?", (name,))
 
-    def save_wants(self, wants: dict):
-        """Updates the wants table"""
+    def wants_rename(self, name_old: str, name_new: str):
+        """Rename a tag"""
+        self.db_operation('UPDATE `wants` SET `listName`=? WHERE `listName` = ?;', (name_new, name_old))
+
+    def wants_card_add(self, list_name: str, card_id: int):
+        """Add a card entry to a wants list"""
+        self.db_operation("INSERT INTO `wants` VALUES (?, ?)", (list_name, card_id))
+
+    def wants_card_remove(self, list_name: str, card_id: int):
+        """Remove a card from a want list """
+        self.db_operation("DELETE FROM `wants` WHERE `listName` = ? AND `multiverseid` = ?", (list_name, card_id))
+
+    # Query operations #################################################################################################
+
+    def search_by_name_filtered(self, term: str, filters: dict, list_size: int) -> dict:
+        """Search for cards based on the cards name with filter constrains"""
+        filter_rarity = filters["rarity"]
+        filer_type = filters["type"]
+        filter_set = filters["set"]
+        filter_mana = filters["mana"].split(',')
+
+        sql = 'SELECT * FROM cards WHERE `name` LIKE ?'
+        parameters = ['%' + term + '%']
+        if filter_rarity != "":
+            sql += ' AND `rarity` = ?'
+            parameters.append(filter_rarity)
+        if filer_type != "":
+            sql += ' AND `types` LIKE ?'
+            parameters.append('%' + filer_type + '%')
+        if filter_set != "":
+            sql += ' AND `set` = ?'
+            parameters.append(filter_set)
+        if len(filter_mana) != 0:
+            for color in filter_mana:
+                sql += ' AND `manaCost` LIKE ?'
+                parameters.append('%' + color + '%')
+        sql += ' LIMIT ?'
+        parameters.append(list_size)
+
+        con = sqlite3.connect(self.db_file)
+        cur = con.cursor()
+        cur.row_factory = sqlite3.Row
+        cur.execute(sql, parameters)
+        rows = cur.fetchall()
+        con.close()
+
+        output = {}
+        for row in rows:
+            card = self.table_to_card_mapping(row)
+            output[card.multiverse_id] = card
+        return output
+
+    def search_by_name(self, term: str) -> dict:
+        """Search for cards based on the cards name"""
+        con = sqlite3.connect(self.db_file)
+        cur = con.cursor()
+        cur.row_factory = sqlite3.Row
+        cur.execute("SELECT * FROM cards WHERE `name` LIKE ? LIMIT 50", ('%' + term + '%',))
+        rows = cur.fetchall()
+        con.close()
+
+        return self.rows_to_card_dict(rows)
+
+    # DB internal functions ############################################################################################
+
+    def rows_to_card_dict(self, rows):
+        """Convert database rows to a card dict"""
+        output = {}
+        for row in rows:
+            card = self.table_to_card_mapping(row)
+            output[card.multiverse_id] = card
+        return output
+
+    def db_operation(self, sql: str, parms: tuple=()):
+        """Perform an arbitrary sql operation on the database"""
         con = sqlite3.connect(self.db_file)
         try:
             with con:
-                for name, cards in wants.items():
-                    for card in cards:
-                        con.execute('UPDATE `wants` SET `listName`=?, `multiverseid`=? WHERE wants.multiverseid = ?;',
-                                    (name, card.multiverse_id, card.multiverse_id))
-                        con.execute('INSERT INTO `wants` (`listName`, `multiverseid`) '
-                                    'SELECT ?,? WHERE (Select Changes() = 0);', (name, card.multiverse_id))
+                con.execute(sql, parms)
         except sqlite3.OperationalError as err:
             util.log("Database Error", util.LogLevel.Error)
             util.log(str(err), util.LogLevel.Error)
@@ -349,3 +342,47 @@ class CardVaultDB:
 
         return card
 
+
+    # def save_library(self, cards: dict):
+    #     """Updates the library, adds new cards"""
+    #     con = sqlite3.connect(self.db_file)
+    #     try:
+    #         with con:
+    #             for multiverse_id in cards.keys():
+    #                 con.execute('UPDATE `library` SET `copies`=?, `multiverseid`=? WHERE multiverseid = ?;',
+    #                             (1, multiverse_id, multiverse_id))
+    #                 con.execute('INSERT INTO `library` (`copies`, `multiverseid`) '
+    #                             'SELECT ?,? WHERE (SELECT Changes() = 0);', (1, multiverse_id))
+    #     except sqlite3.OperationalError as err:
+    #         util.log("Database Error", util.LogLevel.Error)
+    #         util.log(str(err), util.LogLevel.Error)
+    #
+    # def save_tags(self, tags: dict):
+    #     """Updates the tags table"""
+    #     con = sqlite3.connect(self.db_file)
+    #     try:
+    #         with con:
+    #             for tag, id_list in tags.items():
+    #                 for id in id_list:
+    #                     con.execute('UPDATE `tags` SET `tag`=?, `multiverseid`=? WHERE tags.multiverseid = ?;',
+    #                                 (tag, id, id))
+    #                     con.execute('INSERT INTO `tags` (`tag`, `multiverseid`) '
+    #                                 'SELECT ?,? WHERE (SELECT Changes() = 0);', (tag, id))
+    #     except sqlite3.OperationalError as err:
+    #         util.log("Database Error", util.LogLevel.Error)
+    #         util.log(str(err), util.LogLevel.Error)
+    #
+    # def save_wants(self, wants: dict):
+    #     """Updates the wants table"""
+    #     con = sqlite3.connect(self.db_file)
+    #     try:
+    #         with con:
+    #             for name, cards in wants.items():
+    #                 for card in cards:
+    #                     con.execute('UPDATE `wants` SET `listName`=?, `multiverseid`=? WHERE wants.multiverseid = ?;',
+    #                                 (name, card.multiverse_id, card.multiverse_id))
+    #                     con.execute('INSERT INTO `wants` (`listName`, `multiverseid`) '
+    #                                 'SELECT ?,? WHERE (SELECT Changes() = 0);', (name, card.multiverse_id))
+    #     except sqlite3.OperationalError as err:
+    #         util.log("Database Error", util.LogLevel.Error)
+    #         util.log(str(err), util.LogLevel.Error)

@@ -59,7 +59,7 @@ class SearchHandlers:
             tree_iter = model.get_iter(path)
             card_id = model.get_value(tree_iter, 0)
             card = card_view.lib[card_id]
-            self.app.add_card_to_lib(card)
+            self.app.lib_card_add(card)
         self.reload_search_view()
         self.app.ui.get_object("searchEntry").grab_focus()
 
@@ -110,9 +110,9 @@ class SearchHandlers:
         cards = card_list.get_selected_cards()
         response = self.app.show_name_enter_dialog("Enter name for new Tag", "")
         if not response == "":
-            self.app.add_tag(response)
+            self.app.tag_new(response)
             for card in cards.values():
-                self.app.add_card_to_lib(card, response)
+                self.app.lib_card_add(card, response)
         else:
             util.log("No tag name entered", util.LogLevel.Warning)
             self.app.push_status("No name for new tag entered")
@@ -124,9 +124,9 @@ class SearchHandlers:
         cards = card_list.get_selected_cards()
         response = self.app.show_name_enter_dialog("Enter name for new Want List", "")
         if not response == "":
-            self.app.add_want_list(response)
+            self.app.wants_new(response)
             for card in cards.values():
-                self.app.add_card_to_want_list(response, card)
+                self.app.wants_card_add(response, card)
         else:
             util.log("No list name entered", util.LogLevel.Warning)
             self.app.push_status("No name for new wants list entered")
@@ -137,7 +137,7 @@ class SearchHandlers:
         card_list = self.app.ui.get_object("searchResults").get_child()
         cards = card_list.get_selected_cards()
         for card in cards.values():
-            self.app.add_card_to_lib(card, item.get_label())
+            self.app.lib_card_add(card, item.get_label())
         self.reload_search_view()
         self.app.push_status("Added " + str(len(cards)) + " card(s) to library.")
 
@@ -146,7 +146,7 @@ class SearchHandlers:
         card_list = self.app.ui.get_object("searchResults").get_child()
         cards = card_list.get_selected_cards()
         for card in cards.values():
-            self.app.add_card_to_want_list(item.get_label(), card)
+            self.app.wants_card_add(item.get_label(), card)
         self.reload_search_view()
         self.app.push_status("Added " + str(len(cards)) + " card(s) to Want List '" + item.get_label() + "'")
 
@@ -168,7 +168,7 @@ class SearchHandlers:
         tree = self.app.ui.get_object("searchResults").get_child()
         cards = tree.get_selected_cards()
         for card in cards.values():
-            self.app.add_card_to_lib(card)
+            self.app.lib_card_add(card)
         self.reload_search_view()
 
     def reload_search_view(self):
@@ -209,7 +209,7 @@ class SearchHandlers:
             util.log("Starting local search for '" + term + "'", util.LogLevel.Info)
             start = time.time()
 
-            cards = self.app.db.search_cards_by_name_filtered(term, filters, 100)
+            cards = self.app.db.search_by_name_filtered(term, filters, 100)
 
             end = time.time()
             util.log("Card info fetched in {}s".format(round(end - start, 3)), util.LogLevel.Info)

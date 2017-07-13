@@ -48,7 +48,7 @@ class Application:
         self.db = database.CardVaultDB(util.get_root_filename(util.DB_NAME))
 
         # Create database tables if they do not exist
-        self.db.create_database()
+        self.db.db_create()
 
         not_found = self.ui.get_object("pageNotFound")
         self.pages = {
@@ -158,7 +158,7 @@ class Application:
 
         window.connect("key-press-event", eval_key_pressed)
 
-    def show_dialog_yes_no_cancel(self, title: str, message: str) -> Gtk.ResponseType:
+    def show_dialog_ync(self, title: str, message: str) -> Gtk.ResponseType:
         """Display a simple Yes/No Question dialog and return the result"""
         dialog = self.ui.get_object("ync_dialog")
         dialog.set_transient_for(self.ui.get_object("mainWindow"))
@@ -168,7 +168,7 @@ class Application:
         dialog.hide()
         return response
 
-    def show_dialog_yes_no(self, title: str, message: str) -> Gtk.ResponseType:
+    def show_dialog_yn(self, title: str, message: str) -> Gtk.ResponseType:
         """Display a simple Yes/No Question dialog and return the result"""
         dialog = self.ui.get_object("yn_dialog")
         dialog.set_transient_for(self.ui.get_object("mainWindow"))
@@ -202,23 +202,29 @@ class Application:
         else:
             return value
 
+    def save_config(self):
+        cf = util.get_root_filename("config.json")
+        util.save_config(self.config, cf)
+        util.log("Config saved to '{}'".format(cf), util.LogLevel.Info)
+
     def save_data(self):
-        util.log("Saving Data to database", util.LogLevel.Info)
-        start = time.time()
-        self.db.save_library(self.library)
-        self.db.save_tags(self.tags)
-        self.db.save_wants(self.wants)
-        end = time.time()
-        util.log("Finished in {}s".format(str(round(end - start, 3))), util.LogLevel.Info)
-        self.unsaved_changes = False
-        self.push_status("All data saved.")
+        # util.log("Saving Data to database", util.LogLevel.Info)
+        # start = time.time()
+        # self.db.save_library(self.library)
+        # self.db.save_tags(self.tags)
+        # self.db.save_wants(self.wants)
+        # end = time.time()
+        # util.log("Finished in {}s".format(str(round(end - start, 3))), util.LogLevel.Info)
+        # self.unsaved_changes = False
+        # self.push_status("All data saved.")
+        pass
 
     def load_data(self):
         util.log("Loading Data from database", util.LogLevel.Info)
         start = time.time()
-        self.library = self.db.get_library()
-        self.tags = self.db.get_tags()
-        self.wants = self.db.get_wants()
+        self.library = self.db.lib_get_all()
+        self.tags = self.db.tag_get_all()
+        self.wants = self.db.wants_get_all()
         end = time.time()
         util.log("Finished in {}s".format(str(round(end-start, 3))), util.LogLevel.Info)
         self.push_status("All data loaded.")
@@ -242,33 +248,35 @@ class Application:
                 lib[card_id] = self.library[card_id]
             return lib
 
-    def tag_card(self, card, tag):
+    def tag_card(self, card, tag: str):
+        """Add a card to tag"""
         list = self.tags[tag]
         list.append(card.multiverse_id)
-        self.unsaved_changes = True
+        self.db.tag_card_add(tag, card.multiverse_id)
 
-    def untag_card(self, card, tag):
+    def untag_card(self, card, tag: str):
         list = self.tags[tag]
         list.remove(card.multiverse_id)
-        self.unsaved_changes = True
+        self.db.tag_card_remove(tag, card.multiverse_id)
 
-    def add_tag(self, tag):
+    def tag_new(self, tag: str):
         self.tags[tag] = []
+        self.db.tag_new(tag)
         util.log("Tag '" + tag + "' added", util.LogLevel.Info)
         self.push_status("Added Tag \"" + tag + "\"")
-        self.unsaved_changes = True
 
-    def remove_tag(self, tag):
+    def tag_delete(self, tag: str):
         del self.tags[tag]
+        self.db.tag_delete(tag)
         util.log("Tag '" + tag + "' removed", util.LogLevel.Info)
         self.push_status("Removed Tag \"" + tag + "\"")
-        self.unsaved_changes = True
 
-    def rename_tag(self, old, new):
+    def tag_rename(self, old, new):
         if old == new:
             return
         self.tags[new] = self.tags[old]
         del self.tags[old]
+        self.db.tag_rename(old, new)
         util.log("Tag '" + old + "' renamed to '" + new + "'", util.LogLevel.Info)
         self.unsaved_changes = True
 
@@ -284,61 +292,93 @@ class Application:
             out = {card.multiverse_id: card for card in self.wants[list_name]}
             return out
 
-    def delete_wants_list(self, name: str):
+    def wants_new(self, name):
+        """Add a empty wants list"""
+        self.wants[name] = []
+        self.db.wants_new(name)
+        util.log("Want list  '" + name + "' created", util.LogLevel.Info)
+        self.push_status("Created want list '" + name + "'")
+
+    def wants_delete(self, name: str):
+        """Delete an wants list an all cards in it"""
         del self.wants[name]
+        self.db.wants_delete(name)
         util.log("Deleted Wants List '{}'".format(name), util.LogLevel.Info)
         self.push_status("Deleted Wants List '{}'".format(name))
-        self.unsaved_changes = True
 
-    def rename_want_list(self, old, new):
+    def wants_rename(self, old: str, new: str):
         if old == new:
             return
         self.wants[new] = self.wants[old]
         del self.wants[old]
+        self.db.wants_rename(old, new)
         util.log("Want List '" + old + "' renamed to '" + new + "'", util.LogLevel.Info)
-        self.unsaved_changes = True
 
-    def add_want_list(self, name):
-        self.wants[name] = []
-        util.log("Want list  '" + name + "' created", util.LogLevel.Info)
-        self.push_status("Created want list '" + name + "'")
-        self.unsaved_changes = True
-
-    def add_card_to_want_list(self, list_name: str, card: 'mtgsdk.Card'):
+    def wants_card_add(self, list_name: str, card: 'mtgsdk.Card'):
         self.wants[list_name].append(card)
+        self.db.wants_card_add(list_name, card.multiverse_id)
         util.log(card.name + " added to want list " + list_name, util.LogLevel.Info)
-        self.unsaved_changes = True
 
-    def add_card_to_lib(self, card, tag=None):
+    def wants_card_remove(self, card: mtgsdk.Card, list: str):
+        """Remove a card from a wants list"""
+        l = self.wants[list]
+        l.remove(card)
+        self.db.wants_card_remove(list, card.multiverse_id)
+        util.log("Removed '{}' from wants list '{}'".format(card.name, list), util.LogLevel.Info)
+
+    def lib_card_add(self, card, tag=None):
         if tag is not None:
             self.tag_card(card, tag)
+            self.db.tag_card_add(tag, card.multiverse_id)
         self.library[card.multiverse_id] = card
+        self.db.lib_card_add(card)
         self.push_status(card.name + " added to library")
-        self.unsaved_changes = True
 
-        self.db.insert_card(card)
-
-    def bulk_add_card_to_lib(self, cards: list, tag: str = None):
+    def lib_card_add_bulk(self, cards: list, tag: str = None):
         for card in cards:
-            self.add_card_to_lib(card, tag)
+            if tag is not None:
+                self.tag_card(card, tag)
+                self.db.tag_card_add(tag, card.multiverse_id)
+            self.lib_card_add(card, tag)
+            self.db.lib_card_add(card)
         util.log("Added {} cards to library.".format(str(len(cards))), util.LogLevel.Info)
         self.push_status("Added {} cards to library.".format(str(len(cards))))
 
-    def remove_card_from_lib(self, card):
+    def lib_card_remove(self, card):
         # Check if card is tagged
-        for card_ids in self.tags.values():
-            if card_ids.__contains__(card.multiverse_id):
-                card_ids.remove(card.multiverse_id)
+        is_tagged, tags = self.db.tag_card_check_tagged(card)
+        if is_tagged:
+            for tag in tags:
+                self.tags[tag].remove(card.multiverse_id)
+                self.db.tag_card_remove(tag, card.multiverse_id)
 
         del self.library[card.multiverse_id]
+        self.db.lib_card_remove(card)
+        util.log("Removed {} from library".format(card.name), util.LogLevel.Info)
         self.push_status(card.name + " removed from library")
-        self.unsaved_changes = True
 
-    def remove_card_from_want_list(self, card: mtgsdk.Card, list: str):
-        l = self.wants[list]
-        l.remove(card)
-        self.unsaved_changes = True
-        util.log("Removed '{}' from wants list '{}'".format(card.name, list), util.LogLevel.Info)
+    def override_user_data(self):
+        """Called after import of user data. Overrides existing user data in database"""
+        util.log("Clearing old user data", util.LogLevel.Info)
+        self.db.db_clear_data_user()
+        util.log("Attempt loading user data to database", util.LogLevel.Info)
+        start = time.time()
+        # Library
+        for card in self.library.values():
+            self.db.lib_card_add(card)
+        # Tags
+        for tag, card_ids in self.tags.items():
+            self.db.tag_new(tag)
+            for card_id in card_ids:
+                self.db.tag_card_add(tag, card_id)
+        # Wants
+        for list_name, cards in self.wants.items():
+            self.db.wants_new(list_name)
+            for card in cards:
+                self.db.wants_card_add(list_name, card.multiverse_id)
+        end = time.time()
+        util.log("Finished in {}s".format(str(round(end - start, 3))), util.LogLevel.Info)
+        self.push_status("User data imported")
 
     def get_mana_icons(self, mana_string):
         if not mana_string:
@@ -360,38 +400,6 @@ class Application:
         else:
             return filter_text.lower() in model[iter][1].lower()
 
-    def load_data_legacy(self):
-        all_existing = True
-        # Load library file
-        self.library = util.load_file(util.get_root_filename("library"))
-        if not self.library:
-            all_existing = False
-            self.library = {}
-        # Load tags file
-        self.tags = util.load_file(util.get_root_filename("tags"))
-        if not self.tags:
-            all_existing = False
-            self.tags = {}
-        # Load wants lists
-        self.wants = util.load_file(util.get_root_filename("wants"))
-        if not self.wants:
-            all_existing = False
-            self.wants = {}
-        # If parts were missing save to create the files
-        if not all_existing:
-            self.save_library_legacy()
-        self.push_status("Library loaded")
-
-    def save_library_legacy(self):
-        # Save library file
-        util.save_file(util.get_root_filename("library"), self.library)
-        # Save tags file
-        util.save_file(util.get_root_filename("tags"), self.tags)
-        # Save wants file
-        util.save_file(util.get_root_filename("wants"), self.wants)
-
-        self.unsaved_changes = False
-        self.push_status("Library saved")
 
 def main():
     Application()
