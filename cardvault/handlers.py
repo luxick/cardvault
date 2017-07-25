@@ -70,11 +70,10 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
                 self.app.tags = imports[1]
                 self.app.wants = imports[2]
                 # Save imported data to database
-                self.app.override_user_data()
+                self.app.db_override_user_data()
                 # Cause current page to reload with imported data
                 self.app.current_page.emit('show')
         dialog.destroy()
-
 
     def on_view_changed(self, item):
         if item.get_active():
@@ -105,7 +104,7 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
         """The cancel button was pressed, set cancel_token to stop download thread"""
         self.cancel_token = True
         # Delete Dialog
-        self.app.ui.get_object("loadDataDialog").destroy()
+        self.app.ui.get_object("loadDataDialog").hide()
         self.app.push_status("Download canceled")
         util.log("Download canceled by user", util.LogLevel.Info)
 
@@ -116,23 +115,22 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
 
     def download_failed(self, err: MtgException):
         # Delete Dialog
-        self.app.ui.get_object("loadDataDialog").destroy()
+        self.app.ui.get_object("loadDataDialog").hide()
         self.app.push_status("Download canceled")
-        self.app.show_message("Download Faild", str(err))
+        self.app.show_message("Download Failed", str(err))
 
     def download_finished(self):
         """Download thread finished without errors"""
         self.cancel_token = False
         self.app.config["local_db"] = True
         self.app.save_config()
-        self.app.ui.get_object("loadDataDialog").destroy()
+        self.app.ui.get_object("loadDataDialog").hide()
         self.app.push_status("Card data downloaded")
         util.log("Card data download finished", util.LogLevel.Info)
 
     def do_download_card_data(self, item: Gtk.MenuItem):
         """Download button was pressed in the menu bar. Starts a thread to load data from the internet"""
-        info_string = "Start downloading card information from the internet?\n" \
-                      "This process can take up to 10 minutes.\n" \
+        info_string = "Start downloading card information from the internet?\n"  \
                       "You can cancel the download at any point."
         response = self.app.show_dialog_yn("Download Card Data", info_string)
         if response == Gtk.ResponseType.NO:
@@ -150,16 +148,40 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
         thread = threading.Thread(target=self.load_thread)
         thread.daemon = True
         thread.start()
-        util.log("Attempt fetching all cards from Gatherer. This may take a while...", util.LogLevel.Info)
+        util.log("Attempt downloading all cards. This may take a while...", util.LogLevel.Info)
 
     def load_thread(self):
         """Worker thread to download info using the mtgsdk"""
-        all_cards = []
-        # Request total number of cards we are going to download
+
+        # Gatherer uses rate limit on Card.all()
+        # Takes ~10 minutes to download all cards
+        # all = self.load_thread_gatherer()
+
+        # Download from mtgjson.com
+        GObject.idle_add(self.load_show_insert_ui, "Downloading...")
+        util.log("Starting download", util.LogLevel.Info)
+        s = time.time()
+        all_json = util.net_all_cards_mtgjson()
+        e = time.time()
+        util.log("Finished in {}s".format(round(e - s, 3)), util.LogLevel.Info)
+
+        self.app.db_delete_card_data()
+
+        GObject.idle_add(self.load_show_insert_ui, "Saving data to disk...")
+        util.log("Saving to sqlite", util.LogLevel.Info)
+        s = time.time()
+        self.app.db.db_insert_data_card(all_json)
+        e = time.time()
+        util.log("Finished in {}s".format(round(e - s, 3)), util.LogLevel.Info)
+
+        self.download_finished()
+
+    def load_thread_gatherer(self):
+        all = []
         all_num = util.get_all_cards_num()
         all_pages = int(math.ceil(all_num / 100))
 
-        # Download cards in pages until no new cards are added
+        # Paging for ui control between downloads
         for i in range(all_pages):
             req_start = time.time()
             try:
@@ -167,7 +189,7 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
             except MtgException as err:
                 util.log(str(err), util.LogLevel.Error)
                 return
-            all_cards = all_cards + new_cards
+            all = all + new_cards
             req_end = time.time()
 
             # Check if the action was canceled during download
@@ -180,13 +202,9 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
             self.app.ui.get_object("dl_progress_bar").set_visible(True)
             self.app.ui.get_object("dl_progress_label").set_visible(True)
             passed = str(round(req_end - req_start, 3))
-            GObject.idle_add(self.load_update_ui, all_cards, all_num, passed)
+            GObject.idle_add(self.load_update_ui, all, all_num, passed)
 
-        # All cards have been downloaded
-        GObject.idle_add(self.load_show_insert_ui, "Saving data to disk...")
-        self.app.db.db_card_insert_bulk(all_cards)
-
-        self.download_finished()
+        return all
 
     def load_update_ui(self, current_list: list, max_cards: int, time_passed: str):
         """Called from withing the worker thread. Updates the download dialog with infos."""

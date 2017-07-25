@@ -4,19 +4,17 @@ import json
 import os
 import re
 import sys
+import six.moves.cPickle as pickle
+from time import localtime, strftime, time
+from PIL import Image as PImage
+import urllib.request
 from urllib import request
+from mtgsdk import Set, Card, MtgException
 
 import gi
-from time import localtime, strftime, time
 gi.require_version('Gtk', '3.0')
 from gi.repository import GdkPixbuf, GLib
-import six.moves.cPickle as pickle
-from PIL import Image as PImage
 
-from urllib.request import Request, urlopen
-
-from mtgsdk import Set
-from mtgsdk import MtgException
 
 # Title of the Program Window
 APPLICATION_TITLE = "Card Vault"
@@ -46,20 +44,24 @@ DB_NAME = "cardvault.db"
 
 ALL_NUM_URL = 'https://api.magicthegathering.io/v1/cards?page=0&pageSize=100'
 
+ALL_SETS_JSON_URL = 'https://mtgjson.com/json/AllSets-x.json'
+
+# URL for card images. Insert card.multiverse_id.
+CARD_IMAGE_URL = 'http://gatherer.wizards.com/Handlers/Image.ashx?multiverseid={}&type=card'
+
 # Colors for card rows in search view
-SEARCH_TREE_COLORS ={
+SEARCH_TREE_COLORS = {
     "unowned": "black",
     "wanted": "#D39F30",
     "owned": "#62B62F"
 }
 
 # Colors for card rows in every default view
-GENERIC_TREE_COLORS ={
+GENERIC_TREE_COLORS = {
     "unowned": "black",
     "wanted": "black",
     "owned": "black"
 }
-
 
 default_config = {
     "hide_duplicates_in_search": False,
@@ -73,7 +75,7 @@ default_config = {
     }
 }
 
-legality_colors ={
+legality_colors = {
     "Banned": "#C65642",
     "Restricted": "#D39F30",
     "Legal": "#62B62F"
@@ -187,19 +189,19 @@ def reload_preconstructed_icons(path: str) -> dict:
     if not os.path.exists(path):
         os.makedirs(path)
 
-    iconfiles = os.listdir(path)
-    for file in iconfiles:
+    files = os.listdir(path)
+    for file in files:
         # Split filename into single icon names and remove extension
         without_ext = file.split(".")[0]
-        list = without_ext.split("_")
+        names = without_ext.split("_")
         # Compute size of the finished icon
-        pic_width = len(list) * 105
+        pic_width = len(names) * 105
         pic_height = 105
         try:
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(ICON_CACHE_PATH + file)
             pixbuf = pixbuf.scale_simple(pic_width / 5, pic_height / 5, GdkPixbuf.InterpType.HYPER)
             # Set name for icon
-            iconname = "_".join(list)
+            iconname = "_".join(names)
             cache[iconname] = pixbuf
         except OSError as err:
             log("Error loading image: " + str(err), LogLevel.Error)
@@ -211,13 +213,19 @@ def load_mana_icons(path: str) -> dict:
         log("Directory for mana icons not found " + path, LogLevel.Error)
         return {}
     icons = {}
-    filenames = os.listdir(path)
-    for file in filenames:
+    files = os.listdir(path)
+    for file in files:
         img = PImage.open(path + file)
         # Strip file extension
         name = os.path.splitext(file)[0]
         icons[name] = img
     return icons
+
+
+def net_all_cards_mtgjson() -> dict:
+    with urllib.request.urlopen(ALL_SETS_JSON_URL) as url:
+        data = json.loads(url.read().decode())
+        return data
 
 
 def net_load_set_list() -> dict:
@@ -226,7 +234,7 @@ def net_load_set_list() -> dict:
         start = time()
         sets = Set.all()
         stop = time()
-        log("Fetched set list in {}s".format(round(stop-start, 3)), LogLevel.Info)
+        log("Fetched set list in {}s".format(round(stop - start, 3)), LogLevel.Info)
     except MtgException as err:
         log(str(err), LogLevel.Error)
         return {}
@@ -305,11 +313,11 @@ def load_dummy_image(size_x: int, size_y: int) -> GdkPixbuf:
                                                   + '/resources/images/dummy.jpg', size_x, size_y)
 
 
-def load_card_image(card: 'mtgsdk.Card', size_x: int, size_y: int, cache: dict) -> GdkPixbuf:
+def load_card_image(card: Card, size_x: int, size_y: int, cache: dict) -> GdkPixbuf:
     """ Retrieve an card image from cache or alternatively load from gatherer"""
     try:
         image = cache[card.multiverse_id]
-    except KeyError as err:
+    except KeyError:
         log("No local image for " + card.name + ". Loading from " + card.image_url, LogLevel.Info)
         filename, image = net_load_card_image(card, size_x, size_y)
         cache[card.multiverse_id] = image
@@ -329,27 +337,27 @@ def net_load_card_image(card, size_x: int, size_y: int) -> (str, GdkPixbuf):
 def create_mana_icons(icons: dict, mana_string: str) -> GdkPixbuf:
     # Convert the string to a List
     safe_string = mana_string.replace("/", "-")
-    list = re.findall("{(.*?)}", safe_string)
-    if len(list) == 0:
+    glyphs = re.findall("{(.*?)}", safe_string)
+    if len(glyphs) == 0:
         return
     # Compute horizontal size for the final image
-    imagesize = len(list) * 105
-    image = PImage.new("RGBA", (imagesize, 105))
+    size = len(glyphs) * 105
+    image = PImage.new("RGBA", (size, 105))
     # Increment for each position of an icon
     # (Workaround: 2 or more of the same icon will be rendered in the same position)
-    poscounter = 0
+    c = 0
     # Go through all entries an add the correspondent icon to the final image
-    for icon in list:
-        xpos = poscounter * 105
+    for icon in glyphs:
+        x_pos = c * 105
         try:
             loaded = icons[icon]
-        except KeyError as err:
+        except KeyError:
             log("No icon file named '" + icon + "' found.", LogLevel.Warning)
             return
-        image.paste(loaded, (xpos, 0))
-        poscounter += 1
+        image.paste(loaded, (x_pos, 0))
+        c += 1
     # Save Icon file
-    path = ICON_CACHE_PATH + "_".join(list) + ".png"
+    path = ICON_CACHE_PATH + "_".join(glyphs) + ".png"
     image.save(path)
     try:
         pixbuf = GdkPixbuf.Pixbuf.new_from_file(path)
@@ -360,7 +368,7 @@ def create_mana_icons(icons: dict, mana_string: str) -> GdkPixbuf:
 
 
 def sizeof_fmt(num, suffix='B'):
-    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
         if abs(num) < 1024.0:
             return "%3.1f%s%s" % (num, unit, suffix)
         num /= 1024.0
@@ -368,11 +376,9 @@ def sizeof_fmt(num, suffix='B'):
 
 
 def get_all_cards_num() -> int:
-    req = Request(ALL_NUM_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    response = urlopen(req)
+    req = urllib.request.Request(ALL_NUM_URL, headers={'User-Agent': 'Mozilla/5.0'})
+    response = urllib.request.urlopen(req)
     headers = response.info()._headers
     for header, value in headers:
         if header == 'Total-Count':
             return int(value)
-# endregion
-

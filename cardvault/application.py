@@ -357,7 +357,7 @@ class Application:
         util.log("Removed {} from library".format(card.name), util.LogLevel.Info)
         self.push_status(card.name + " removed from library")
 
-    def override_user_data(self):
+    def db_override_user_data(self):
         """Called after import of user data. Overrides existing user data in database"""
         util.log("Clearing old user data", util.LogLevel.Info)
         self.db.db_clear_data_user()
@@ -379,6 +379,12 @@ class Application:
         end = time.time()
         util.log("Finished in {}s".format(str(round(end - start, 3))), util.LogLevel.Info)
         self.push_status("User data imported")
+
+    def db_delete_card_data(self):
+        """Called before before rebuilding local data storage"""
+        util.log("Clearing local card data", util.LogLevel.Info)
+        self.db.db_clear_data_card()
+        util.log("Done", util.LogLevel.Info)
 
     def get_mana_icons(self, mana_string):
         if not mana_string:

@@ -23,14 +23,13 @@ class CardVaultDB:
                         "`colors` TEXT, `names` TEXT, `type` TEXT, `supertypes` TEXT, "
                         "`subtypes` TEXT, `types` TEXT, `rarity` TEXT, `text` TEXT, "
                         "`flavor` TEXT, `artist` TEXT, `number` INTEGER, `power` TEXT, "
-                        "`toughness` TEXT, `loyalty` INTEGER, `multiverseid` INTEGER UNIQUE , "
+                        "`toughness` TEXT, `loyalty` INTEGER, `multiverseid` INTEGER , "
                         "`variations` TEXT, `watermark` TEXT, `border` TEXT, `timeshifted` "
                         "TEXT, `hand` TEXT, `life` TEXT, `releaseDate` TEXT, `starter` TEXT, "
                         "`printings` TEXT, `originalText` TEXT, `originalType` TEXT, "
                         "`source` TEXT, `imageUrl` TEXT, `set` TEXT, `setName` TEXT, `id` TEXT, "
-                        "`legalities` TEXT, `rulings` TEXT, `foreignNames` TEXT, "
-                        "PRIMARY KEY(`multiverseid`) )")
-            con.execute("CREATE TABLE IF NOT EXISTS library ( multiverse_id INT PRIMARY KEY, copies INT )")
+                        "`legalities` TEXT, `rulings` TEXT, `foreignNames` TEXT) ")
+            con.execute("CREATE TABLE IF NOT EXISTS library ( multiverseid INT PRIMARY KEY, copies INT )")
             con.execute("CREATE TABLE IF NOT EXISTS tags ( tag TEXT, multiverseid INT )")
             con.execute("CREATE TABLE IF NOT EXISTS wants ( listName TEXT, multiverseid INT )")
 
@@ -41,7 +40,8 @@ class CardVaultDB:
             with con:
                 # Map card object to database tables
                 db_values = self.card_to_table_mapping(card)
-                sql_string = "INSERT INTO `cards` VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+                sql_string = "INSERT INTO `cards` VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," \
+                             "?,?,?,?,?,?,?,?,?,?)"
                 # Insert into database
                 con.execute(sql_string, db_values)
         except sqlite3.OperationalError as err:
@@ -49,10 +49,6 @@ class CardVaultDB:
             util.log(str(err), util.LogLevel.Error)
         except sqlite3.IntegrityError:
             pass
-
-    def db_card_insert_bulk(self, card_list: list):
-        for card in card_list:
-            self.db_card_insert(card)
 
     def db_get_all(self):
         sql = 'SELECT * FROM cards'
@@ -67,6 +63,34 @@ class CardVaultDB:
             card = self.table_to_card_mapping(row)
             output.append(card)
         return output
+
+    def db_insert_data_card(self, cards_json):
+        """Insert download from mtgjson"""
+        rows = []
+        for data in cards_json.values():
+            cards = []
+            for raw in data["cards"]:
+                c = Card(raw)
+                c.image_url = util.CARD_IMAGE_URL.format(c.multiverse_id)
+                c.set = data["code"]
+                c.set_name = data["name"]
+                cards.append(c)
+
+            for c in cards:
+                rows.append(self.card_to_table_mapping(c))
+        # Connect to database
+        con = sqlite3.connect(self.db_file)
+        try:
+            with con:
+                sql_string = "INSERT INTO `cards` VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," \
+                             "?,?,?,?,?,?,?,?,?,?)"
+                con.executemany(sql_string, rows)
+        except sqlite3.OperationalError as err:
+            util.log("Database Error", util.LogLevel.Error)
+            util.log(str(err), util.LogLevel.Error)
+        except sqlite3.IntegrityError as err:
+            util.log("Database Error", util.LogLevel.Error)
+            util.log(str(err), util.LogLevel.Error)
 
     def db_clear_data_card(self):
         """Delete all resource data from database"""

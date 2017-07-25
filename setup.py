@@ -37,5 +37,5 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'License :: OSI Approved :: MIT License',
-    ], install_requires=['gi', 'pillow']
+    ], install_requires=['gi', 'pillow', 'six']
 )
