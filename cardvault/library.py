@@ -178,7 +178,7 @@ class LibraryHandlers:
             lib = self.app.library
         else:
             lib = self.app.get_tagged_cards(tag)
-        self.reload_tag_list(tag == "All" or tag == "Untagged")
+        self.reload_tag_list(not (tag == "All" or tag == "Untagged"))
         tag_combo = self.app.ui.get_object("tagCardCombo")
         tag_combo.set_model(self.app.ui.get_object("tagStore"))
 
