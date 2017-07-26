@@ -110,7 +110,7 @@ class Application:
             supertypes = " - " + " ".join(card.subtypes)
         types = " ".join(card.types) + supertypes
         builder.get_object("cardTypes").set_text(types)
-        # Rarityget_card_image
+        # Rarity
         builder.get_object("cardRarity").set_text(card.rarity if card.rarity else "")
         # Release
         builder.get_object("cardReleaseDate").set_text(card.release_date if card.release_date else "")
@@ -150,7 +150,7 @@ class Application:
 
         window.show_all()
 
-        def eval_key_pressed(widget,event):
+        def eval_key_pressed(widget, event):
             key, modifier = Gtk.accelerator_parse('Escape')
             keyval = event.keyval
             if keyval == key:

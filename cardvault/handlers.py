@@ -165,6 +165,10 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
         e = time.time()
         util.log("Finished in {}s".format(round(e - s, 3)), util.LogLevel.Info)
 
+        if self.cancel_token:
+            GObject.idle_add(self.download_canceled)
+            return
+
         self.app.db_delete_card_data()
 
         GObject.idle_add(self.load_show_insert_ui, "Saving data to disk...")
