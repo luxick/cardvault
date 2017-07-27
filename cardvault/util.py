@@ -81,6 +81,22 @@ legality_colors = {
     "Legal": "#62B62F"
 }
 
+card_colors = {
+            'White': 'W',
+            'Blue': 'U',
+            'Black': 'B',
+            'Red': 'R',
+            'Green': 'G'
+        }
+
+color_sort_order = {
+    'W': 0,
+    'U': 1,
+    'B': 2,
+    'R': 3,
+    'G': 4
+}
+
 rarity_dict = {
     "special": 0,
     "common": 1,
@@ -365,6 +381,12 @@ def create_mana_icons(icons: dict, mana_string: str) -> GdkPixbuf:
     except:
         return
     return pixbuf
+
+
+def unique_list(seq):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in seq if not (x in seen or seen_add(x))]
 
 
 def sizeof_fmt(num, suffix='B'):

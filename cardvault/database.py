@@ -28,7 +28,7 @@ class CardVaultDB:
                         "TEXT, `hand` TEXT, `life` TEXT, `releaseDate` TEXT, `starter` TEXT, "
                         "`printings` TEXT, `originalText` TEXT, `originalType` TEXT, "
                         "`source` TEXT, `imageUrl` TEXT, `set` TEXT, `setName` TEXT, `id` TEXT, "
-                        "`legalities` TEXT, `rulings` TEXT, `foreignNames` TEXT) ")
+                        "`legalities` TEXT, `rulings` TEXT, `foreignNames` TEXT, `fcolor` TEXT) ")
             con.execute("CREATE TABLE IF NOT EXISTS library ( multiverseid INT PRIMARY KEY, copies INT )")
             con.execute("CREATE TABLE IF NOT EXISTS tags ( tag TEXT, multiverseid INT )")
             con.execute("CREATE TABLE IF NOT EXISTS wants ( listName TEXT, multiverseid INT )")
@@ -41,7 +41,7 @@ class CardVaultDB:
                 # Map card object to database tables
                 db_values = self.card_to_table_mapping(card)
                 sql_string = "INSERT INTO `cards` VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," \
-                             "?,?,?,?,?,?,?,?,?,?)"
+                             "?,?,?,?,?,?,?,?,?,?,?)"
                 # Insert into database
                 con.execute(sql_string, db_values)
         except sqlite3.OperationalError as err:
@@ -83,7 +83,7 @@ class CardVaultDB:
         try:
             with con:
                 sql_string = "INSERT INTO `cards` VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," \
-                             "?,?,?,?,?,?,?,?,?,?)"
+                             "?,?,?,?,?,?,?,?,?,?,?)"
                 con.executemany(sql_string, rows)
         except sqlite3.OperationalError as err:
             util.log("Database Error", util.LogLevel.Error)
@@ -235,6 +235,7 @@ class CardVaultDB:
         filer_type = filters["type"]
         filter_set = filters["set"]
         filter_mana = filters["mana"].split(',')
+        filter_mana.sort(key=lambda val: util.color_sort_order[val[0]])
 
         sql = 'SELECT * FROM cards WHERE `name` LIKE ?'
         parameters = ['%' + term + '%']
@@ -248,9 +249,8 @@ class CardVaultDB:
             sql += ' AND `set` = ?'
             parameters.append(filter_set)
         if len(filter_mana) != 0:
-            for color in filter_mana:
-                sql += ' AND `manaCost` LIKE ?'
-                parameters.append('%' + color + '%')
+            sql += ' AND `fcolor` = ?'
+            parameters.append(self.filter_colors_list(filter_mana))
         sql += ' LIMIT ?'
         parameters.append(list_size)
 
@@ -299,7 +299,25 @@ class CardVaultDB:
             util.log(str(err), util.LogLevel.Error)
 
     @staticmethod
-    def card_to_table_mapping(card: Card):
+    def filter_colors_list(mana: list) -> str:
+        symbols = util.unique_list(mana)
+        output = [s for s in symbols if (s in util.card_colors.values())]
+        return "-".join(output)
+
+    @staticmethod
+    def filter_colors(card) -> str:
+        """Extracts the colors of a card for filtering."""
+        output = []
+        if card.colors is not None:
+            for color in card.colors:
+                output.append(util.card_colors[color])
+        else:
+            output.append("C")
+        # TODO extrafilter_colorsct symbols from card text
+
+        return "-".join(output)
+
+    def card_to_table_mapping(self, card: Card):
         """Return the database representation of a card object"""
         return (str(card.name), str(card.layout), str(card.mana_cost), card.cmc, str(card.colors), str(card.names),
                 str(card.type), str(card.supertypes), str(card.subtypes), str(card.types), str(card.rarity),
@@ -312,7 +330,7 @@ class CardVaultDB:
                 str(card.original_text),
                 str(card.original_type), str(card.source), str(card.image_url), str(card.set), str(card.set_name),
                 str(card.id),
-                str(card.legalities), str(card.rulings), str(card.foreign_names))
+                str(card.legalities), str(card.rulings), str(card.foreign_names), self.filter_colors(card))
 
     @staticmethod
     def table_to_card_mapping(row: sqlite3.Row):
