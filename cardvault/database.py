@@ -234,7 +234,7 @@ class CardVaultDB:
         filter_rarity = filters["rarity"]
         filer_type = filters["type"]
         filter_set = filters["set"]
-        filter_mana = filters["mana"].split(',')
+        filter_mana = filters["mana"]
         filter_mana.sort(key=lambda val: util.color_sort_order[val[0]])
 
         sql = 'SELECT * FROM cards WHERE `name` LIKE ?'
@@ -313,7 +313,7 @@ class CardVaultDB:
                 output.append(util.card_colors[color])
         else:
             output.append("C")
-        # TODO extrafilter_colorsct symbols from card text
+        # TODO extract symbols from card text
 
         return "-".join(output)
 

@@ -179,15 +179,13 @@ class SearchHandlers:
 
     def get_filters(self) -> dict:
         """ Read selected filters from UI and return values as dict """
-        output = {}
-        # Mana colors
-        color_list = []
-        # Go through mana color buttons an get the active filters
+        output = {"mana": []}
+
         for button in self.app.ui.get_object("manaFilterGrid").get_children():
             if isinstance(button, Gtk.ToggleButton):
                 if button.get_active():
-                    color_list.append(button.get_name())
-        output["mana"] = ",".join(color_list)
+                    output["mana"].append(button.get_name())
+
         # Rarity
         combo = self.app.ui.get_object("rarityCombo")
         output["rarity"] = self._get_combo_value(combo)
@@ -204,6 +202,7 @@ class SearchHandlers:
 
     def search_cards(self, term: str, filters: dict) -> dict:
         """Return a dict of cards based on a search term and filters"""
+
         # Check if a local database can be used for searching
         if self.app.config["local_db"]:
             util.log("Starting local search for '" + term + "'", util.LogLevel.Info)
@@ -223,7 +222,7 @@ class SearchHandlers:
                 util.log("Fetching card info ...", util.LogLevel.Info)
                 start = time.time()
                 data = Card.where(name=term) \
-                    .where(colorIdentity=filters["mana"]) \
+                    .where(colorIdentity=",".join(filters["mana"])) \
                     .where(types=filters["type"]) \
                     .where(set=filters["set"]) \
                     .where(rarity=filters["rarity"]) \
