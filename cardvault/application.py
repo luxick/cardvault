@@ -1,25 +1,15 @@
-import sys
-try:
-    import gi
-    gi.require_version('Gtk', '3.0')
-    from gi.repository import Gtk, GObject, Pango, GdkPixbuf
-except ImportError as ex:
-    print("Couldn't import GTK dependencies. Make sure you "
-          "installed the PyGTK package and %s module." % ex.name)
-    sys.exit(-1)
-
+import gi
 import os
 import copy
 import re
 import mtgsdk
 import time
+from gi.repository import Gtk, GObject, Pango
 from typing import Type, Dict, List
-
 from cardvault import handlers
 from cardvault import util
 from cardvault import database
-
-
+gi.require_version('Gtk', '3.0')
 
 
 class Application:
@@ -131,8 +121,8 @@ class Application:
             text_label.set_line_wrap(True)
             text_label.set_halign(Gtk.Align.END)
             color = self.config['legality_colors'][legality["legality"]]
-            date_label.set_markup("<span fgcolor=\""+color+"\">" + legality["format"] + ":" + "</span>")
-            text_label.set_markup("<span fgcolor=\""+color+"\">" + legality["legality"] + "</span>")
+            date_label.set_markup("<span fgcolor=\"" + color + "\">" + legality["format"] + ":" + "</span>")
+            text_label.set_markup("<span fgcolor=\"" + color + "\">" + legality["legality"] + "</span>")
             grid.attach(date_label, 0, rows + 2, 1, 1)
             grid.attach(text_label, 1, rows + 2, 1, 1)
 
@@ -185,7 +175,7 @@ class Application:
         dialog.destroy()
 
     def show_name_enter_dialog(self, title: str, value: str) -> str:
-        dialog = self.ui.get_object("nameEnterDialog")     # type: Gtk.Dialog
+        dialog = self.ui.get_object("nameEnterDialog")  # type: Gtk.Dialog
         dialog.set_transient_for(self.ui.get_object("mainWindow"))
         label = self.ui.get_object("nameEnterLabel")
         label.set_text(title)
@@ -225,7 +215,7 @@ class Application:
         self.tags = self.db.tag_get_all()
         self.wants = self.db.wants_get_all()
         end = time.time()
-        util.log("Finished in {}s".format(str(round(end-start, 3))), util.LogLevel.Info)
+        util.log("Finished in {}s".format(str(round(end - start, 3))), util.LogLevel.Info)
         self.push_status("All data loaded.")
 
     def set_online(self, status: bool):
@@ -398,7 +388,7 @@ class Application:
         util.log("Done", util.LogLevel.Info)
 
     def get_all_sets(self) -> dict:
-        if not self.is_online   ():
+        if not self.is_online():
             l = self.db.set_get_all()
             out = {}
             for s in l:

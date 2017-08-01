@@ -15,7 +15,7 @@ setup(
     package_data={'cardvault': ['resources/images/*', 'resources/mana/*', 'gui/*']},
 
     data_files=[
-    #('share/icons/hicolor/scalable/apps', ['data/mypackage.svg']),
+    ('share/icons/hicolor/scalable/apps', ['cardvault/resources/cardvault.png']),
     ('share/applications', ['cardvault/resources/cardvault.desktop'])],
 
     author='luxick',

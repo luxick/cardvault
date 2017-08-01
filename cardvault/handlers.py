@@ -12,9 +12,9 @@ from gi.repository import Gtk, GObject
 from cardvault import util, application
 from mtgsdk import Card, MtgException
 
-from search import SearchHandlers
-from library import LibraryHandlers
-from wants import WantsHandlers
+from cardvault.search import SearchHandlers
+from cardvault.library import LibraryHandlers
+from cardvault.wants import WantsHandlers
 
 
 class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):

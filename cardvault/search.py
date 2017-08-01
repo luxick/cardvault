@@ -1,15 +1,10 @@
 import gi
+import time
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 from urllib.error import URLError, HTTPError
-
-import time
-
 from mtgsdk import Card
-
-from cardvault import application
-from cardvault import cardlist
-from cardvault import util
+from cardvault import application, cardlist, util
 
 
 class SearchHandlers:
