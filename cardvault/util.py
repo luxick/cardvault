@@ -49,6 +49,9 @@ ALL_SETS_JSON_URL = 'https://mtgjson.com/json/AllSets-x.json'
 # URL for card images. Insert card.multiverse_id.
 CARD_IMAGE_URL = 'http://gatherer.wizards.com/Handlers/Image.ashx?multiverseid={}&type=card'
 
+# Location of manual wiki
+MANUAL_LOCATION = 'https://github.com/luxick/cardvault'
+
 # Colors for card rows in search view
 SEARCH_TREE_COLORS = {
     "unowned": "black",
@@ -67,6 +70,7 @@ default_config = {
     "hide_duplicates_in_search": False,
     "start_page": "search",
     "local_db": False,
+    "first_run": True,
     "log_level": 3,
     "legality_colors": {
         "Banned": "#C65642",

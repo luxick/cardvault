@@ -32,10 +32,9 @@ class Application:
 
         self.current_page = None
         self.unsaved_changes = False
-        self.current_lib_tag = "All"
+        self.current_lib_tag = "Untagged"
 
         self.db = database.CardVaultDB(util.get_root_filename(util.DB_NAME))
-
         # Create database tables if they do not exist
         self.db.db_create()
 
@@ -74,6 +73,17 @@ class Application:
         start_page[0].activate()
 
         util.log("Launching Card Vault version {}".format(util.VERSION), util.LogLevel.Info)
+
+        if self.config.get('first_run'):
+            ref = '<a href="' + util.MANUAL_LOCATION + '">' + util.MANUAL_LOCATION + '</a>'
+            s = "Welcome to Card Vault.\n\nIf you need help using the application please refer to the manual at\n{}\n\n" \
+                "To increase search performance and to be able to search while offline it is advised to use the " \
+                "offline mode.\nDo you want to start the download?".format(ref)
+            response = self.show_dialog_yn("Welcome", s)
+            if response == Gtk.ResponseType.YES:
+                self.handlers.do_download_card_data(Gtk.MenuItem())
+                self.config['first_run'] = False
+                self.save_config()
 
     def push_status(self, msg):
         status_bar = self.ui.get_object("statusBar")
@@ -152,7 +162,7 @@ class Application:
         dialog = self.ui.get_object("ync_dialog")
         dialog.set_transient_for(self.ui.get_object("mainWindow"))
         dialog.set_title(title)
-        self.ui.get_object("ync_label").set_text(message)
+        self.ui.get_object("ync_label").set_markup(message)
         response = dialog.run()
         dialog.hide()
         return response
@@ -162,7 +172,7 @@ class Application:
         dialog = self.ui.get_object("yn_dialog")
         dialog.set_transient_for(self.ui.get_object("mainWindow"))
         dialog.set_title(title)
-        self.ui.get_object("yn_label").set_text(message)
+        self.ui.get_object("yn_label").set_markup(message)
         response = dialog.run()
         dialog.hide()
         return response
