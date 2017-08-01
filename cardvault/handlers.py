@@ -122,8 +122,7 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
     def download_finished(self):
         """Download thread finished without errors"""
         self.cancel_token = False
-        self.app.config["local_db"] = True
-        self.app.save_config()
+        self.app.set_online(False)
         self.app.ui.get_object("loadDataDialog").hide()
         self.app.push_status("Card data downloaded")
         util.log("Card data download finished", util.LogLevel.Info)
@@ -238,6 +237,7 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
     def do_clear_card_data(self, menu_item):
         util.log("Deleting all local card data", util.LogLevel.Info)
         self.app.db.db_clear_data_card()
+        self.app.set_online(True)
         util.log("Done", util.LogLevel.Info)
 
     def do_clear_data(self, item):

@@ -1,7 +1,7 @@
 import sqlite3
 import ast
 
-from mtgsdk import Card
+from mtgsdk import Card, Set
 from cardvault import util
 
 
@@ -32,6 +32,9 @@ class CardVaultDB:
             con.execute("CREATE TABLE IF NOT EXISTS library ( multiverseid INT PRIMARY KEY, copies INT )")
             con.execute("CREATE TABLE IF NOT EXISTS tags ( tag TEXT, multiverseid INT )")
             con.execute("CREATE TABLE IF NOT EXISTS wants ( listName TEXT, multiverseid INT )")
+            con.execute("CREATE TABLE IF NOT EXISTS sets ( code TEXT PRIMARY KEY , name TEXT, type TEXT, border TEXT, "
+                        "mkmid INT, mkmname TEXT, releasedate TEXT, gatherercode TEXT, magiccardsinfocode TEXT, "
+                        "booster TEXT, oldcode TEXT)")
 
     def db_card_insert(self, card: Card):
         # Connect to database
@@ -66,7 +69,8 @@ class CardVaultDB:
 
     def db_insert_data_card(self, cards_json):
         """Insert download from mtgjson"""
-        rows = []
+        c_rows = []
+        s_rows = []
         for data in cards_json.values():
             cards = []
             for raw in data["cards"]:
@@ -77,14 +81,20 @@ class CardVaultDB:
                 cards.append(c)
 
             for c in cards:
-                rows.append(self.card_to_table_mapping(c))
+                c_rows.append(self.card_to_table_mapping(c))
+            set = Set(data)
+            s_rows.append(self.set_to_table_mapping(set))
+
         # Connect to database
         con = sqlite3.connect(self.db_file)
         try:
             with con:
                 sql_string = "INSERT INTO `cards` VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," \
                              "?,?,?,?,?,?,?,?,?,?,?)"
-                con.executemany(sql_string, rows)
+                con.executemany(sql_string, c_rows)
+                sql_string = "INSERT INTO `sets` VALUES (?,?,?,?,?,?,?,?,?,?,?)"
+                con.executemany(sql_string, s_rows)
+
         except sqlite3.OperationalError as err:
             util.log("Database Error", util.LogLevel.Error)
             util.log(str(err), util.LogLevel.Error)
@@ -95,6 +105,7 @@ class CardVaultDB:
     def db_clear_data_card(self):
         """Delete all resource data from database"""
         self.db_operation("DELETE FROM cards")
+        self.db_operation("DELETE FROM sets")
 
     def db_clear_data_user(self):
         """Delete all user data from database"""
@@ -278,6 +289,20 @@ class CardVaultDB:
 
         return self.rows_to_card_dict(rows)
 
+    def set_get_all(self):
+        con = sqlite3.connect(self.db_file)
+        cur = con.cursor()
+        cur.row_factory = sqlite3.Row
+
+        # First load all tags
+        cur.execute("SELECT * FROM sets")
+        rows = cur.fetchall()
+        sets = []
+        for row in rows:
+            sets.append(self.table_to_set_mapping(row))
+
+        return sets
+
     # DB internal functions ############################################################################################
 
     def rows_to_card_dict(self, rows):
@@ -383,3 +408,27 @@ class CardVaultDB:
         card.foreign_names = ast.literal_eval(row["foreignNames"])
 
         return card
+
+    @staticmethod
+    def set_to_table_mapping(set: Set):
+        """Convert Set object to a table row"""
+        return (set.code, set.name, set.type, set.border, set.mkm_id, set.mkm_name, set.release_date, set.gatherer_code,
+                set.magic_cards_info_code, str(set.booster), set.old_code)
+
+    @staticmethod
+    def table_to_set_mapping(row):
+        """Return Set object representation of a table row"""
+        set = Set()
+        set.code = row['code']
+        set.name = row['name']
+        set.type = row['type']
+        set.border = row['border']
+        set.mkm_id = row['mkmid']
+        set.mkm_name = row['mkmname']
+        set.release_date = row['releasedate']
+        set.gatherer_code = row['gatherercode']
+        set.magic_cards_info_code = row['magiccardsinfocode']
+        set.booster = ast.literal_eval(row['booster'])
+        set.old_code = row['oldcode']
+
+        return set

@@ -2,9 +2,7 @@ import sys
 try:
     import gi
     gi.require_version('Gtk', '3.0')
-    from gi.repository import Gtk
-    from gi.repository import Pango
-    from gi.repository import GdkPixbuf
+    from gi.repository import Gtk, GObject, Pango, GdkPixbuf
 except ImportError as ex:
     print("Couldn't import GTK dependencies. Make sure you "
           "installed the PyGTK package and %s module." % ex.name)
@@ -22,6 +20,8 @@ from cardvault import util
 from cardvault import database
 
 
+
+
 class Application:
     # ---------------------------------Initialize the Application----------------------------------------------
     def __init__(self):
@@ -32,7 +32,6 @@ class Application:
         util.LOG_LEVEL = self.config["log_level"]
         util.log("Start using config file: '{}'".format(self.configfile), util.LogLevel.Info)
 
-        # Load ui files
         self.ui = Gtk.Builder()
         self.ui.add_from_file(util.get_ui_filename("mainwindow.glade"))
         self.ui.add_from_file(util.get_ui_filename("overlays.glade"))
@@ -64,14 +63,14 @@ class Application:
         self.precon_icons = util.reload_preconstructed_icons(util.CACHE_PATH + "icons/")
         self.mana_icons = util.load_mana_icons(os.path.dirname(__file__) + "/resources/mana/")
 
-        util.log("Loading set list...", util.LogLevel.Info)
-        self.sets = util.load_sets(util.get_root_filename("sets"))
-
         self.library = Dict[str, Type[mtgsdk.Card]]
         self.tags = Dict[str, str]
         self.wants = Dict[str, List[Type[mtgsdk.Card]]]
+        self.load_user_data()
 
-        self.load_data()
+        self.ui.get_object('statusbar_icon').set_from_icon_name(
+            util.online_icons[self.is_online()], Gtk.IconSize.BUTTON)
+        self.ui.get_object('statusbar_icon').set_tooltip_text(util.online_tooltips[self.is_online()])
 
         self.handlers = handlers.Handlers(self)
         self.ui.connect_signals(self.handlers)
@@ -119,7 +118,7 @@ class Application:
         # Printings
         prints = []
         for set in card.printings:
-            prints.append(self.sets[set].name)
+            prints.append(self.get_all_sets()[set].name)
         builder.get_object("cardPrintings").set_text(", ".join(prints))
         # Legalities
         grid = builder.get_object("legalitiesGrid")
@@ -219,7 +218,7 @@ class Application:
         # self.push_status("All data saved.")
         pass
 
-    def load_data(self):
+    def load_user_data(self):
         util.log("Loading Data from database", util.LogLevel.Info)
         start = time.time()
         self.library = self.db.lib_get_all()
@@ -228,6 +227,17 @@ class Application:
         end = time.time()
         util.log("Finished in {}s".format(str(round(end-start, 3))), util.LogLevel.Info)
         self.push_status("All data loaded.")
+
+    def set_online(self, status: bool):
+        """Online status of the application. True if no local card data is present."""
+        self.ui.get_object('statusbar_icon').set_from_icon_name(util.online_icons[status], Gtk.IconSize.BUTTON)
+        self.ui.get_object('statusbar_icon').set_tooltip_text(util.online_tooltips[status])
+        self.config['local_db'] = not status
+        self.save_config()
+
+    def is_online(self) -> bool:
+        """Return the online status of the application. True if no local data present."""
+        return not self.config['local_db']
 
     def get_untagged_cards(self):
         lib = copy.copy(self.library)
@@ -384,7 +394,18 @@ class Application:
         """Called before before rebuilding local data storage"""
         util.log("Clearing local card data", util.LogLevel.Info)
         self.db.db_clear_data_card()
+        self.set_online(True)
         util.log("Done", util.LogLevel.Info)
+
+    def get_all_sets(self) -> dict:
+        if not self.is_online   ():
+            l = self.db.set_get_all()
+            out = {}
+            for s in l:
+                out[s.code] = s
+        else:
+            out = util.load_sets(util.get_root_filename('sets'))
+        return out
 
     def get_mana_icons(self, mana_string):
         if not mana_string:
@@ -408,5 +429,6 @@ class Application:
 
 
 def main():
+    GObject.threads_init()
     Application()
     Gtk.main()

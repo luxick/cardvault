@@ -195,7 +195,7 @@ class SearchHandlers:
         # Set
         name = self.app.ui.get_object("setEntry").get_text()
         output["set"] = ""
-        for mtgset in self.app.sets.values():
+        for mtgset in self.app.get_all_sets().values():
             if mtgset.name == name:
                 output["set"] = mtgset.code
         return output
@@ -343,7 +343,7 @@ class SearchHandlers:
     def _init_set_entry(self, entry):
         """ Initialize model for set entry """
         set_store = Gtk.ListStore(str, str)
-        for mtgset in self.app.sets.values():
+        for mtgset in self.app.get_all_sets().values():
             set_store.append([mtgset.name, mtgset.code])
         completer = Gtk.EntryCompletion()
         completer.set_model(set_store)

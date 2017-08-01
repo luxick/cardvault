@@ -106,6 +106,16 @@ rarity_dict = {
 }
 card_types = ["Creature", "Artifact", "Instant", "Enchantment", "Sorcery", "Land", "Planeswalker"]
 
+online_icons = {
+    True: 'network-wired',
+    False: 'drive-harddisk'
+}
+
+online_tooltips = {
+    True: 'Using online card data',
+    False: 'Using card data from local database.'
+}
+
 
 class LogLevel(enum.Enum):
     Error = 1
@@ -258,7 +268,10 @@ def net_load_set_list() -> dict:
 
 
 def load_sets(filename: str) -> dict:
-    # TODO Update Data function
+    """
+    Load sets from local file if possible.
+    Called by: Application if in online mode
+    """
     if not os.path.isfile(filename):
         # use mtgsdk api to retrieve al list of all sets
         sets = net_load_set_list()
