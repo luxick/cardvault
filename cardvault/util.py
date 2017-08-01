@@ -20,7 +20,7 @@ from gi.repository import GdkPixbuf, GLib
 APPLICATION_TITLE = "Card Vault"
 
 # Program version
-VERSION = "0.5.0"
+VERSION = "0.6.0"
 
 # Path of image cache
 CACHE_PATH = os.path.expanduser('~') + "/.cardvault/"
