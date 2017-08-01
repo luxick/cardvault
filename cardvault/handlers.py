@@ -75,6 +75,29 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
                 self.app.current_page.emit('show')
         dialog.destroy()
 
+    def do_card_data_user(self, menu_item):
+        """
+        Handler for Clear User Data menu item.
+        """
+        response = self.app.show_dialog_yn("Deleting All User Data", "You are about to delete all data in the "
+                                                                     "library.\nThis can not be undone.\nProceed?")
+        if response == Gtk.ResponseType.YES:
+            util.log("Deleting all local card data", util.LogLevel.Info)
+            self.app.db_delete_user_data()
+            util.log("Done", util.LogLevel.Info)
+            self.app.push_status("Library deleted")
+
+    def do_card_data_card(self, item):
+        """Handler for Clear Card Data menu item"""
+        response = self.app.show_dialog_yn("Deleting All Card Data", "You are about to delete all local card data.\n"
+                                                                     "Further searches will use the internet to search "
+                                                                     "for cards.\nProceed?")
+        if response == Gtk.ResponseType.YES:
+            util.log("Deleting all library data", util.LogLevel.Info)
+            self.app.db_delete_card_data()
+            util.log("Done", util.LogLevel.Info)
+            self.app.push_status("Local card data deleted. Switching to online mode.")
+
     def on_view_changed(self, item):
         if item.get_active():
             container = self.app.ui.get_object("contentPage")
@@ -158,6 +181,11 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
 
         # Download from mtgjson.com
         GObject.idle_add(self.load_show_insert_ui, "Downloading...")
+
+        # Waiting in case a canceled thread is still running.
+        while self.cancel_token:
+            continue
+
         util.log("Starting download", util.LogLevel.Info)
         s = time.time()
         all_json = util.net_all_cards_mtgjson()
@@ -173,7 +201,7 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
         GObject.idle_add(self.load_show_insert_ui, "Saving data to disk...")
         util.log("Saving to sqlite", util.LogLevel.Info)
         s = time.time()
-        self.app.db.db_insert_data_card(all_json)
+        GObject.idle_add(self.app.db.db_insert_data_card, all_json)
         e = time.time()
         util.log("Finished in {}s".format(round(e - s, 3)), util.LogLevel.Info)
 
@@ -231,16 +259,3 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
         self.app.ui.get_object("dl_spinner").set_visible(True)
         self.app.ui.get_object("dl_progress_bar").set_visible(False)
         self.app.ui.get_object("dl_progress_label").set_visible(False)
-
-    # ---------------------- Debug actions -------------------------------
-
-    def do_clear_card_data(self, menu_item):
-        util.log("Deleting all local card data", util.LogLevel.Info)
-        self.app.db.db_clear_data_card()
-        self.app.set_online(True)
-        util.log("Done", util.LogLevel.Info)
-
-    def do_clear_data(self, item):
-        util.log("Deleting all library data", util.LogLevel.Info)
-        self.app.db.db_clear_data_user()
-        util.log("Done", util.LogLevel.Info)

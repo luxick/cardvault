@@ -387,6 +387,12 @@ class Application:
         self.set_online(True)
         util.log("Done", util.LogLevel.Info)
 
+    def db_delete_user_data(self):
+        """Delete all user data"""
+        util.log("Clearing all user data", util.LogLevel.Info)
+        self.db.db_clear_data_user()
+        util.log("Done", util.LogLevel.Info)
+
     def get_all_sets(self) -> dict:
         if not self.is_online():
             l = self.db.set_get_all()

@@ -26,7 +26,7 @@
               <object class="GtkMenuItem" id="Main">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="label" translatable="yes">_Main</property>
+                <property name="label" translatable="yes">_Data</property>
                 <property name="use_underline">True</property>
                 <child type="submenu">
                   <object class="GtkMenu" id="mainMenu">
@@ -38,6 +38,7 @@
                         <property name="label">gtk-save</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Save library to disk</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
                         <signal name="activate" handler="do_save_library" swapped="no"/>
@@ -54,7 +55,7 @@
                       <object class="GtkMenuItem" id="exportLibrary">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Export Library</property>
+                        <property name="label" translatable="yes">Export Library Data</property>
                         <property name="use_underline">True</property>
                         <signal name="activate" handler="do_export_library" swapped="no"/>
                       </object>
@@ -63,7 +64,7 @@
                       <object class="GtkMenuItem" id="importLibrary">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Import Library</property>
+                        <property name="label" translatable="yes">Import Library Data</property>
                         <property name="use_underline">True</property>
                         <signal name="activate" handler="do_import_library" swapped="no"/>
                       </object>
@@ -78,9 +79,42 @@
                       <object class="GtkMenuItem" id="main_load_data">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Download card data to hard drive</property>
                         <property name="label" translatable="yes">Download Card Data</property>
                         <property name="use_underline">True</property>
                         <signal name="activate" handler="do_download_card_data" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="label" translatable="yes">Clear Data</property>
+                        <property name="use_underline">True</property>
+                        <child type="submenu">
+                          <object class="GtkMenu">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <child>
+                              <object class="GtkMenuItem" id="main_clr_usr_data">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Clear User Data</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="do_card_data_user" swapped="no"/>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkMenuItem" id="main_clr_crd_data">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label" translatable="yes">Clear Card Data</property>
+                                <property name="use_underline">True</property>
+                                <signal name="activate" handler="do_card_data_card" swapped="no"/>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
                       </object>
                     </child>
                     <child>
@@ -165,52 +199,6 @@
                         <property name="group">searchViewItem</property>
                         <signal name="activate" handler="on_view_changed" swapped="no"/>
                         <accelerator key="4" signal="activate" modifiers="GDK_CONTROL_MASK"/>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </child>
-            <child>
-              <object class="GtkMenuItem" id="debug">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label" translatable="yes">DEBUG</property>
-                <property name="use_underline">True</property>
-                <child type="submenu">
-                  <object class="GtkMenu">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <child>
-                      <object class="GtkMenuItem">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Clear DB Data</property>
-                        <property name="use_underline">True</property>
-                        <child type="submenu">
-                          <object class="GtkMenu">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <child>
-                              <object class="GtkMenuItem" id="del_data">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">Clear Library Data</property>
-                                <property name="use_underline">True</property>
-                                <signal name="activate" handler="do_clear_data" swapped="no"/>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkMenuItem" id="del_cards">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">Clear Card Data</property>
-                                <property name="use_underline">True</property>
-                                <signal name="activate" handler="do_clear_card_data" swapped="no"/>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
                       </object>
                     </child>
                   </object>
