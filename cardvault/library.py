@@ -11,6 +11,7 @@ class LibraryHandlers:
     def __init__(self, app: 'application.Application'):
         """Initialize the library view"""
         self.app = app
+        self.active_tag = "All"
         # Create Tree View for library
         container = self.app.ui.get_object("libraryContainer")
         card_list = cardlist.CardList(True, self.app, util.GENERIC_TREE_COLORS)
@@ -41,13 +42,13 @@ class LibraryHandlers:
     def do_show_all_clicked(self, button):
         # Clear selection in tag list
         self.app.ui.get_object("tagTree").get_selection().unselect_all()
-        self.app.current_lib_tag = "All"
+        self.active_tag = "All"
         self.reload_library("All")
 
     def do_show_untagged_clicked(self, button):
         # Clear selection in tag list
         self.app.ui.get_object("tagTree").get_selection().unselect_all()
-        self.app.current_lib_tag = "Untagged"
+        self.active_tag = "Untagged"
         self.reload_library("Untagged")
 
     def do_tag_cards(self, entry):
@@ -64,15 +65,15 @@ class LibraryHandlers:
         for path in pathlist:
             tree_iter = model.get_iter(path)
             tag = model.get_value(tree_iter, 0)
-            self.app.current_lib_tag = tag
+            self.active_tag = tag
             self.reload_library(tag)
 
-    def do_tag_tree_press_event(self, treeview, event):
+    def do_tag_tree_press_event(self, tree, event):
         if event.button == 3:  # right click
-            path = treeview.get_path_at_pos(int(event.x), int(event.y))
+            path = tree.get_path_at_pos(int(event.x), int(event.y))
             if path:
-                tree_iter = treeview.get_model().get_iter(path[0])
-                tag = treeview.get_model().get_value(tree_iter, 0)
+                tree_iter = tree.get_model().get_iter(path[0])
+                tag = tree.get_model().get_value(tree_iter, 0)
                 self.app.ui.get_object("tagListPopup").popup(None, None, None, None, 0, event.time)
 
     def do_tag_list_rename(self, tree):
@@ -91,35 +92,51 @@ class LibraryHandlers:
         for path in pathlist:
             tree_iter = model.get_iter(path)
             tag = model.get_value(tree_iter, 0)
-            question = "Really delete tag: {}?".format(tag)
-            dialog = Gtk.MessageDialog(self.app.ui.get_object("mainWindow"), 0, Gtk.MessageType.WARNING,
-                                       Gtk.ButtonsType.YES_NO, question)
-            response = dialog.run()
-            dialog.destroy()
-            if response == Gtk.ResponseType.NO:
-                return
-            self.app.tag_delete(tag)
-            self.app.current_page.emit('show')
 
-    def do_refilter_library(self, container):
+            question = "Really delete '{}'?".format(tag)
+            response = self.app.show_dialog_yn("Delete Tag", question)
+
+            if response == Gtk.ResponseType.YES:
+                self.app.tag_delete(tag)
+                self.app.current_page.emit('show')
+
+    @staticmethod
+    def do_refilter_library(container):
         # Access Card View inside of container
         container.get_child().filter.refilter()
 
     def lib_tree_popup_showed(self, menu):
-        # Get selected cards
-        card_list = self.app.ui.get_object("libraryContainer").get_child()
-        cards = card_list.get_selected_cards()
+        """
+        Construct the context menu for the card tree in library view.
+        Menu items can vary if one or more cards are selected an if they are already tagged.
+        Called By: libListPopup UI Element
+        """
+        tree = self.app.ui.get_object("libraryContainer").get_child()
+        selected = tree.get_selected_cards()
 
-        # Check if a tag is selected
-        current_tag = self.app.current_lib_tag
-        if current_tag == "All" or current_tag == "Untagged":
-            return
+        root = self.app.ui.get_object("tagItem")
+        tags_men = Gtk.Menu()
+        root.set_submenu(tags_men)
 
-        # Check if selected Cards are tagged
+        for list_name in self.app.tags.keys():
+            item = Gtk.MenuItem()
+            tags_men.add(item)
+            item.set_label(list_name)
+            item.connect('activate', self.tag_cards_sig, selected, list_name)
+
+        # Add separator
+        tags_men.add(Gtk.SeparatorMenuItem())
+        # Add new tag item
+        new_tag = Gtk.MenuItem("New Tag")
+        new_tag.connect('activate', self.lib_new_tag_and_add, selected)
+        tags_men.add(new_tag)
+
+        root.show_all()
+
+        # Check if a selected card is tagged
         for id_list in self.app.tags.values():
-            for card_id in cards.keys():
+            for card_id in selected.keys():
                 if id_list.__contains__(card_id):
-                    # Enable untag menu item
                     self.app.ui.get_object("untagItem").set_sensitive(True)
                     return
 
@@ -127,11 +144,11 @@ class LibraryHandlers:
         # Get selected cards
         card_list = self.app.ui.get_object("libraryContainer").get_child()
         cards = card_list.get_selected_cards()
-        tag = self.app.current_lib_tag
+        tag = self.active_tag
         for card in cards.values():
             self.app.untag_card(card, tag)
         self.reload_library(tag)
-        self.reload_tag_list(none_selected=True)
+        self.reload_tag_list(clear_selection=True)
 
     def do_popup_remove_card(self, item):
         # Get selected cards
@@ -140,8 +157,8 @@ class LibraryHandlers:
         # Remove selected cards
         for card in cards.values():
             self.app.lib_card_remove(card)
-        self.reload_library(self.app.current_lib_tag)
-        self.reload_tag_list(none_selected=True)
+        self.reload_library(self.active_tag)
+        self.reload_tag_list(clear_selection=True)
 
     # ---------------------------------Library Tree----------------------------------------------
 
@@ -190,11 +207,23 @@ class LibraryHandlers:
             card_tree.store.clear()
             self.app.ui.get_object("noResults").set_visible(True)
 
+        self.app.ui.get_object("searchTitle").set_text(tag)
+
+    def lib_new_tag_and_add(self, item, cards):
+        response = self.app.show_name_enter_dialog("Enter name for new Tag", "")
+        if not response == "":
+            self.app.tag_new(response)
+            self.tag_cards(cards, response)
+        else:
+            util.log("No tag name entered", util.LogLevel.Warning)
+            self.app.push_status("No name for new tag entered")
+        self.reload_library(self.active_tag)
+
     def add_new_tag(self, name):
         self.app.tag_new(name)
         self.reload_tag_list(True)
 
-    def reload_tag_list(self, none_selected=False):
+    def reload_tag_list(self, clear_selection=False):
         """Reload left pane tag list"""
         tree = self.app.ui.get_object("tagTree")
         (path, column) = tree.get_cursor()
@@ -202,9 +231,13 @@ class LibraryHandlers:
         store.clear()
         for tag, ids in self.app.tags.items():
             store.append([tag, tag + " (" + str(len(ids)) + ")"])
-        if none_selected:
+        if clear_selection:
             tree.set_cursor(path if path else 0)
         store.set_sort_column_id(1, Gtk.SortType.ASCENDING)
+
+    def tag_cards_sig(self, wigdet, cards, tag):
+        self.tag_cards(cards, tag)
+        self.reload_library(self.active_tag)
 
     def tag_cards(self, card_list, tag):
         # Check if tag exist and create if necessary
@@ -214,4 +247,3 @@ class LibraryHandlers:
         for card in card_list.values():
             if not self.app.tags[tag].__contains__(card.multiverse_id):
                 self.app.tag_card(card, tag)
-

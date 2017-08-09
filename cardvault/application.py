@@ -187,8 +187,7 @@ class Application:
     def show_name_enter_dialog(self, title: str, value: str) -> str:
         dialog = self.ui.get_object("nameEnterDialog")  # type: Gtk.Dialog
         dialog.set_transient_for(self.ui.get_object("mainWindow"))
-        label = self.ui.get_object("nameEnterLabel")
-        label.set_text(title)
+        dialog.set_title(title)
         entry = self.ui.get_object("nameEnterEntry")
         entry.set_text(value)
         entry.grab_focus()

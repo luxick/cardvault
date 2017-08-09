@@ -76,7 +76,6 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
 
         dialog.destroy()
 
-
     def do_import_library(self, item):
         """Called by menu item import library"""
         # Show file picker dialog for import
