@@ -51,6 +51,32 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
 
         dialog.destroy()
 
+    def do_export_json(self, item):
+        """
+        Export user data to file
+        Called By: Export menu item
+        """
+        response = self.app.show_dialog_yn("Temoprary Dialog", "[Choose data to export here]")
+        if response == Gtk.ResponseType.NO:
+            return
+
+        dialog = Gtk.FileChooserDialog("Export Library", self.app.ui.get_object("mainWindow"),
+                                       Gtk.FileChooserAction.SAVE,
+                                       (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                                        Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+        dialog.set_current_name("mtg_export-" + datetime.datetime.now().strftime("%Y-%m-%d") + ".json")
+        dialog.set_current_folder(os.path.expanduser("~"))
+        response = dialog.run()
+
+        if response == Gtk.ResponseType.OK:
+            # prepare export file
+            file = {"library": self.app.library, "tags": self.app.tags, "wants": self.app.wants}
+            util.export_json(dialog.get_filename(), file)
+            self.app.push_status("Library exported")
+
+        dialog.destroy()
+
+
     def do_import_library(self, item):
         """Called by menu item import library"""
         # Show file picker dialog for import

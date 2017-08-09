@@ -1,6 +1,7 @@
 import copy
 import enum
 import json
+import jsonpickle
 import os
 import re
 import sys
@@ -294,6 +295,16 @@ def export_library(path, file):
     try:
         pickle.dump(file, open(path, 'wb'))
         log("Library exported to \"" + path + "\"", LogLevel.Info)
+    except OSError as err:
+        log(str(err), LogLevel.Error)
+
+
+def export_json(path, file):
+    """Write file in json format"""
+    try:
+        f = open(path, 'w')
+        s = jsonpickle.encode(file)
+        f.write(s)
     except OSError as err:
         log(str(err), LogLevel.Error)
 

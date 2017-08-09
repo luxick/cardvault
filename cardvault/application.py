@@ -4,12 +4,12 @@ import copy
 import re
 import mtgsdk
 import time
+gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GObject, Pango
 from typing import Type, Dict, List
 from cardvault import handlers
 from cardvault import util
 from cardvault import database
-gi.require_version('Gtk', '3.0')
 
 
 class Application:
@@ -219,7 +219,7 @@ class Application:
         pass
 
     def load_user_data(self):
-        util.log("Loading Data from database", util.LogLevel.Info)
+        util.log("Loading User Data from form '{}'".format(util.get_root_filename(util.DB_NAME)), util.LogLevel.Info)
         start = time.time()
         self.library = self.db.lib_get_all()
         self.tags = self.db.tag_get_all()
