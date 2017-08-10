@@ -9,6 +9,7 @@ class CardVaultDB:
     """Data access class for sqlite3"""
     def __init__(self, db_file: str):
         self.db_file = db_file
+        self.connection = sqlite3.connect(self.db_file)
 
     # Database operations ##############################################################################################
 
@@ -37,7 +38,8 @@ class CardVaultDB:
                         "booster TEXT, oldcode TEXT)")
 
     def db_card_insert(self, card: Card):
-        # Connect to database
+        """Insert single card data into database"""
+        # Use own connection so that inserts are commited directly
         con = sqlite3.connect(self.db_file)
         try:
             with con:
@@ -54,13 +56,12 @@ class CardVaultDB:
             pass
 
     def db_get_all(self):
+        """Return data of all cards in database"""
         sql = 'SELECT * FROM cards'
-        con = sqlite3.connect(self.db_file)
-        cur = con.cursor()
+        cur = self.connection.cursor()
         cur.row_factory = sqlite3.Row
         cur.execute(sql)
         rows = cur.fetchall()
-        con.close()
         output = []
         for row in rows:
             card = self.table_to_card_mapping(row)
@@ -85,7 +86,7 @@ class CardVaultDB:
             set = Set(data)
             s_rows.append(self.set_to_table_mapping(set))
 
-        # Connect to database
+        # Use separate connection to commit changes immediately
         con = sqlite3.connect(self.db_file)
         try:
             with con:
@@ -117,12 +118,10 @@ class CardVaultDB:
 
     def lib_get_all(self) -> dict:
         """Load library from database"""
-        con = sqlite3.connect(self.db_file)
-        cur = con.cursor()
+        cur = self.connection.cursor()
         cur.row_factory = sqlite3.Row
         cur.execute('SELECT * FROM `library` INNER JOIN `cards` ON library.multiverseid = cards.multiverseid')
         rows = cur.fetchall()
-        con.close()
 
         return self.rows_to_card_dict(rows)
 
@@ -138,8 +137,7 @@ class CardVaultDB:
 
     def tag_get_all(self) -> dict:
         """Loads a dict from database with all tags and the card ids tagged"""
-        con = sqlite3.connect(self.db_file)
-        cur = con.cursor()
+        cur = self.connection.cursor()
         cur.row_factory = sqlite3.Row
 
         # First load all tags
@@ -179,8 +177,7 @@ class CardVaultDB:
 
     def tag_card_check_tagged(self, card) -> tuple:
         """Check if a card is tagged. Return True/False and a list of tags."""
-        con = sqlite3.connect(self.db_file)
-        cur = con.cursor()
+        cur = self.connection.cursor()
         cur.row_factory = sqlite3.Row
         cur.execute('SELECT `tag` FROM `tags` WHERE tags.multiverseid = ? ', (card.multiverse_id,))
         rows = cur.fetchall()
@@ -197,8 +194,7 @@ class CardVaultDB:
 
     def wants_get_all(self) -> dict:
         """Load all wants lists from database"""
-        con = sqlite3.connect(self.db_file)
-        cur = con.cursor()
+        cur = self.connection.cursor()
         cur.row_factory = sqlite3.Row
 
         # First load all lists
@@ -294,7 +290,6 @@ class CardVaultDB:
         cur = con.cursor()
         cur.row_factory = sqlite3.Row
 
-        # First load all tags
         cur.execute("SELECT * FROM sets")
         rows = cur.fetchall()
         sets = []
@@ -313,15 +308,26 @@ class CardVaultDB:
             output[card.multiverse_id] = card
         return output
 
-    def db_operation(self, sql: str, parms: tuple=()):
+    def db_operation(self, sql: str, args: tuple=()):
         """Perform an arbitrary sql operation on the database"""
-        con = sqlite3.connect(self.db_file)
+        cur = self.connection.cursor()
         try:
-            with con:
-                con.execute(sql, parms)
+            cur.execute(sql, args)
         except sqlite3.OperationalError as err:
             util.log("Database Error", util.LogLevel.Error)
             util.log(str(err), util.LogLevel.Error)
+
+    def db_save_changes(self):
+        try:
+            self.connection.commit()
+        except sqlite3.Error as err:
+            self.connection.rollback()
+            util.log("Database Error", util.LogLevel.Error)
+            util.log(str(err), util.LogLevel.Error)
+
+    def db_unsaved_changes(self) -> bool:
+        """Checks if database is currently in transaction"""
+        return self.connection.in_transaction
 
     @staticmethod
     def filter_colors_list(mana: list) -> str:

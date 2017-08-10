@@ -31,7 +31,6 @@ class Application:
         self.ui.add_from_file(util.get_ui_filename("dialogs.glade"))
 
         self.current_page = None
-        self.unsaved_changes = False
         self.current_lib_tag = "Untagged"
 
         self.db = database.CardVaultDB(util.get_root_filename(util.DB_NAME))
@@ -200,21 +199,22 @@ class Application:
         else:
             return value
 
+    def unsaved_changes(self) -> bool:
+        """Check if database is in transaction"""
+        return self.db.db_unsaved_changes()
+
     def save_config(self):
         cf = util.get_root_filename("config.json")
         util.save_config(self.config, cf)
         util.log("Config saved to '{}'".format(cf), util.LogLevel.Info)
 
     def save_data(self):
-        # util.log("Saving Data to database", util.LogLevel.Info)
-        # start = time.time()
-        # self.db.save_library(self.library)
-        # self.db.save_tags(self.tags)
-        # self.db.save_wants(self.wants)
-        # end = time.time()
-        # util.log("Finished in {}s".format(str(round(end - start, 3))), util.LogLevel.Info)
-        # self.unsaved_changes = False
-        # self.push_status("All data saved.")
+        util.log("Saving Data to database", util.LogLevel.Info)
+        start = time.time()
+        self.db.db_save_changes()
+        end = time.time()
+        util.log("Finished in {}s".format(str(round(end - start, 3))), util.LogLevel.Info)
+        self.push_status("All data saved.")
         pass
 
     def load_user_data(self):
@@ -287,7 +287,6 @@ class Application:
         del self.tags[old]
         self.db.tag_rename(old, new)
         util.log("Tag '" + old + "' renamed to '" + new + "'", util.LogLevel.Info)
-        self.unsaved_changes = True
 
     def get_wanted_card_ids(self) -> List[str]:
         all_ids = []

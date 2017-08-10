@@ -138,10 +138,10 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
             self.app.ui.get_object("mainWindow").set_title(app_title)
 
     def do_delete_event(self, arg1, arg2):
-        if self.app.unsaved_changes:
+        if self.app.unsaved_changes():
             response = self.app.show_dialog_ync("Unsaved Changes",
-                                                          "You have unsaved changes in your library. "
-                                                          "Save before exiting?")
+                                                "You have unsaved changes in your library. "
+                                                "Save before exiting?")
             if response == Gtk.ResponseType.YES:
                 self.app.save_data()
                 return False
@@ -177,7 +177,7 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
 
     def do_download_card_data(self, item: Gtk.MenuItem):
         """Download button was pressed in the menu bar. Starts a thread to load data from the internet"""
-        info_string = "Start downloading card information from the internet?\n"  \
+        info_string = "Start downloading card information from the internet?\n" \
                       "You can cancel the download at any point."
         response = self.app.show_dialog_yn("Download Card Data", info_string)
         if response == Gtk.ResponseType.NO:
