@@ -86,7 +86,6 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
         dialog.set_current_folder(os.path.expanduser("~"))
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
-            # Show confirmation message
             override_question = self.app.show_dialog_yn(
                 "Import Library", "Importing a library will override your current library.\nProceed?")
             if override_question == Gtk.ResponseType.YES:
@@ -94,9 +93,7 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
                 self.app.library = imports[0]
                 self.app.tags = imports[1]
                 self.app.wants = imports[2]
-                # Save imported data to database
                 self.app.db_override_user_data()
-                # Cause current page to reload with imported data
                 self.app.current_page.emit('show')
         dialog.destroy()
 
@@ -123,6 +120,13 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
             util.log("Done", util.LogLevel.Info)
             self.app.push_status("Local card data deleted. Switching to online mode.")
 
+    def prefs_open(self, item):
+        """
+        Handler for open preferences menu item
+        Called By: prefs_item menu item
+        """
+        self.app.show_preferences_dialog()
+
     def on_view_changed(self, item):
         if item.get_active():
             container = self.app.ui.get_object("contentPage")
@@ -136,6 +140,9 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
 
             app_title = new_page.get_name() + " - " + util.APPLICATION_TITLE
             self.app.ui.get_object("mainWindow").set_title(app_title)
+
+            self.app.config["last_viewed"] = new_page.get_name().lower()
+            self.app.save_config()
 
     def do_delete_event(self, arg1, arg2):
         if self.app.unsaved_changes():

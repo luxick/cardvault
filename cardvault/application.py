@@ -1,9 +1,12 @@
+from collections import OrderedDict
+
 import gi
 import os
 import copy
 import re
 import mtgsdk
 import time
+
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GObject, Pango
 from typing import Type, Dict, List
@@ -15,12 +18,10 @@ from cardvault import database
 class Application:
     # ---------------------------------Initialize the Application----------------------------------------------
     def __init__(self):
-
         # Load configuration file
-        self.configfile = util.get_root_filename("config.json")
-        self.config = util.parse_config(self.configfile, util.default_config)
+        self.config = self.load_config()
         util.LOG_LEVEL = self.config["log_level"]
-        util.log("Start using config file: '{}'".format(self.configfile), util.LogLevel.Info)
+        util.log("Start using config file: '{}'".format(util.get_root_filename("config.json")), util.LogLevel.Info)
 
         self.ui = Gtk.Builder()
         self.ui.add_from_file(util.get_ui_filename("mainwindow.glade"))
@@ -68,7 +69,8 @@ class Application:
         self.push_status("Card Vault ready.")
 
         view_menu = self.ui.get_object("viewMenu")
-        start_page = [page for page in view_menu.get_children() if page.get_name() == util.START_PAGE]
+        view = self.config["start_page"] if not self.config["start_page"] == "dynamic" else self.config["last_viewed"]
+        start_page = [page for page in view_menu.get_children() if page.get_name() == view]
         start_page[0].activate()
 
         util.log("Launching Card Vault version {}".format(util.VERSION), util.LogLevel.Info)
@@ -129,7 +131,7 @@ class Application:
             text_label.set_line_wrap_mode(Pango.WrapMode.WORD)
             text_label.set_line_wrap(True)
             text_label.set_halign(Gtk.Align.END)
-            color = self.config['legality_colors'][legality["legality"]]
+            color = util.LEGALITY_COLORS[legality["legality"]]
             date_label.set_markup("<span fgcolor=\"" + color + "\">" + legality["format"] + ":" + "</span>")
             text_label.set_markup("<span fgcolor=\"" + color + "\">" + legality["legality"] + "</span>")
             grid.attach(date_label, 0, rows + 2, 1, 1)
@@ -199,6 +201,40 @@ class Application:
         else:
             return value
 
+    def show_preferences_dialog(self):
+        """Show a dialog to adjust user preferences"""
+        dialog = self.ui.get_object("pref_dialog")  # type: Gtk.Dialog
+        dialog.set_transient_for(self.ui.get_object("mainWindow"))
+
+        store = Gtk.ListStore(str, str)
+        for page in self.pages.keys():
+            store.append([page.title(), page])
+        store.append(["Continue where you left", "dynamic"])
+        page_map = {"search": 0,
+                    "library": 1,
+                    "decks": 2,
+                    "wants": 3,
+                    "dynamic": 4}
+        self.ui.get_object("pref_start_view_combo").set_model(store)
+        self.ui.get_object("pref_start_view_combo").set_active(page_map[self.config["start_page"]])
+
+        self.ui.get_object("pref_show_all_check").set_active(self.config["show_all_in_search"])
+
+        result = dialog.run()
+        dialog.hide()
+
+        if not result == Gtk.ResponseType.OK:
+            return
+
+        tree_iter = self.ui.get_object("pref_start_view_combo").get_active_iter()
+        value = self.ui.get_object("pref_start_view_combo").get_model().get_value(tree_iter, 1)
+        self.config["start_page"] = value
+
+        self.config["show_all_in_search"] = self.ui.get_object("pref_show_all_check").get_active()
+
+        self.save_config()
+        self.config = self.load_config()
+
     def unsaved_changes(self) -> bool:
         """Check if database is in transaction"""
         return self.db.db_unsaved_changes()
@@ -206,7 +242,11 @@ class Application:
     def save_config(self):
         cf = util.get_root_filename("config.json")
         util.save_config(self.config, cf)
-        util.log("Config saved to '{}'".format(cf), util.LogLevel.Info)
+
+    @staticmethod
+    def load_config() -> dict:
+        configfile = util.get_root_filename("config.json")
+        return util.parse_config(configfile, util.DEFAULT_CONFIG)
 
     def save_data(self):
         util.log("Saving Data to database", util.LogLevel.Info)

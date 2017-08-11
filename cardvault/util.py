@@ -13,9 +13,9 @@ from urllib import request
 from mtgsdk import Set, Card, MtgException
 
 import gi
+
 gi.require_version('Gtk', '3.0')
 from gi.repository import GdkPixbuf, GLib
-
 
 # Title of the Program Window
 APPLICATION_TITLE = "Card Vault"
@@ -27,12 +27,6 @@ VERSION = "0.6.0"
 CACHE_PATH = os.path.expanduser('~') + "/.cardvault/"
 IMAGE_CACHE_PATH = os.path.expanduser('~') + "/.cardvault/images/"
 ICON_CACHE_PATH = os.path.expanduser('~') + "/.cardvault/icons/"
-
-# When True Search view will list a card multiple times for each set they appear in
-SHOW_FROM_ALL_SETS = True
-
-# First page to show after startup
-START_PAGE = "search"
 
 # Log level of the application
 # 1 Info
@@ -67,32 +61,28 @@ GENERIC_TREE_COLORS = {
     "owned": "black"
 }
 
-default_config = {
-    "hide_duplicates_in_search": False,
-    "start_page": "search",
-    "local_db": False,
-    "first_run": True,
-    "log_level": 3,
-    "legality_colors": {
-        "Banned": "#C65642",
-        "Restricted": "#D39F30",
-        "Legal": "#62B62F"
-    }
-}
-
-legality_colors = {
+LEGALITY_COLORS = {
     "Banned": "#C65642",
     "Restricted": "#D39F30",
     "Legal": "#62B62F"
 }
 
+DEFAULT_CONFIG = {
+    "last_viewed": "",
+    "show_all_in_search": True,
+    "start_page": "search",
+    "local_db": False,
+    "first_run": True,
+    "log_level": 3
+}
+
 card_colors = {
-            'White': 'W',
-            'Blue': 'U',
-            'Black': 'B',
-            'Red': 'R',
-            'Green': 'G'
-        }
+    'White': 'W',
+    'Blue': 'U',
+    'Black': 'B',
+    'Red': 'R',
+    'Green': 'G'
+}
 
 color_sort_order = {
     'W': 0,
@@ -157,10 +147,6 @@ def parse_config(filename: str, default: dict):
     try:
         with open(filename) as configfile:
             loaded_config = json.load(configfile)
-            if 'legality_colors' in config and 'legality_colors' in loaded_config:
-                # Need to prevent nested dict from being overwritten with an incomplete dict
-                config['legality_colors'].update(loaded_config['legality_colors'])
-                loaded_config['legality_colors'] = config['legality_colors']
             config.update(loaded_config)
     except IOError:
         # Will just use the default config

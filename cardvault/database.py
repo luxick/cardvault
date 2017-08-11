@@ -105,8 +105,17 @@ class CardVaultDB:
 
     def db_clear_data_card(self):
         """Delete all resource data from database"""
-        self.db_operation("DELETE FROM cards")
-        self.db_operation("DELETE FROM sets")
+        con = sqlite3.connect(self.db_file)
+        try:
+            with con:
+                con.execute("DELETE FROM cards")
+                con.execute("DELETE FROM sets")
+        except sqlite3.OperationalError as err:
+            util.log("Database Error", util.LogLevel.Error)
+            util.log(str(err), util.LogLevel.Error)
+        except sqlite3.IntegrityError as err:
+            util.log("Database Error", util.LogLevel.Error)
+            util.log(str(err), util.LogLevel.Error)
 
     def db_clear_data_user(self):
         """Delete all user data from database"""
@@ -236,7 +245,7 @@ class CardVaultDB:
 
     # Query operations #################################################################################################
 
-    def search_by_name_filtered(self, term: str, filters: dict, list_size: int) -> dict:
+    def search_by_name_filtered(self, term: str, filters: dict, list_size: int) -> list:
         """Search for cards based on the cards name with filter constrains"""
         filter_rarity = filters["rarity"]
         filer_type = filters["type"]
@@ -268,10 +277,10 @@ class CardVaultDB:
         rows = cur.fetchall()
         con.close()
 
-        output = {}
+        output = []
         for row in rows:
             card = self.table_to_card_mapping(row)
-            output[card.multiverse_id] = card
+            output.append(card)
         return output
 
     def search_by_name(self, term: str) -> dict:
