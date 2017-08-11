@@ -207,7 +207,7 @@ class LibraryHandlers:
             card_tree.store.clear()
             self.app.ui.get_object("noResults").set_visible(True)
 
-        self.app.ui.get_object("searchTitle").set_text(tag)
+        self.app.ui.get_object("lib_title").set_text(tag)
 
     def lib_new_tag_and_add(self, item, cards):
         response = self.app.show_name_enter_dialog("Enter name for new Tag", "")

@@ -158,10 +158,7 @@ class WantsHandlers:
             tree.store.clear()
             self.app.ui.get_object("wantsOverlay").set_visible(True)
 
-        # Set Title
-        label = self.app.ui.get_object("wantsTileLabel")  # type: Gtk.Label
-        label.set_markup("<big>" + str(selected_list) + "</big>")
-
+        self.app.ui.get_object("wants_title").set_text(str(selected_list))
 
     def reload_wants_list(self, preserve=False):
         tree = self.app.ui.get_object("wantsListsTree")
