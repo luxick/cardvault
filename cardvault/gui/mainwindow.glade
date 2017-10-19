@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 -->
+<!-- Generated with glade 3.20.1 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkWindow" id="mainWindow">
@@ -57,7 +57,7 @@
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Export Library Data</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="do_export_json" swapped="no"/>
+                        <signal name="activate" handler="do_export_library" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -175,20 +175,6 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkRadioMenuItem" id="decksViewItem">
-                        <property name="name">decks</property>
-                        <property name="visible">True</property>
-                        <property name="sensitive">False</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Decks</property>
-                        <property name="use_underline">True</property>
-                        <property name="draw_as_radio">True</property>
-                        <property name="group">searchViewItem</property>
-                        <signal name="activate" handler="on_view_changed" swapped="no"/>
-                        <accelerator key="3" signal="activate" modifiers="GDK_CONTROL_MASK"/>
-                      </object>
-                    </child>
-                    <child>
                       <object class="GtkRadioMenuItem" id="wantsViewItem">
                         <property name="name">wants</property>
                         <property name="visible">True</property>
@@ -198,7 +184,7 @@
                         <property name="draw_as_radio">True</property>
                         <property name="group">searchViewItem</property>
                         <signal name="activate" handler="on_view_changed" swapped="no"/>
-                        <accelerator key="4" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+                        <accelerator key="3" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
                     </child>
                   </object>

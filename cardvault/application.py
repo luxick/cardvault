@@ -42,7 +42,6 @@ class Application:
         self.pages = {
             "search": self.ui.get_object("searchView"),
             "library": self.ui.get_object("libraryView"),
-            "decks": not_found,
             "wants": self.ui.get_object("wantsView")
         }
 

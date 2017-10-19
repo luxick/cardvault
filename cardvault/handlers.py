@@ -51,14 +51,49 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
 
         dialog.destroy()
 
+    def export_cell_toggled(self, widget, pos):
+        model = self.app.ui.get_object("export_treestore")
+        iter = model.get_iter(pos)
+        model.set_value(iter, 0, not widget.get_active())
+
+        if len(pos.split(":")) > 1:
+            # A child node has been clicked
+            pass
+
     def do_export_json(self, item):
         """
         Export user data to file
         Called By: Export menu item
         """
-        response = self.app.show_dialog_yn("Temoprary Dialog", "[Choose data to export here]")
-        if response == Gtk.ResponseType.NO:
-            return
+        # dialog = self.app.ui.get_object("export_dialog")
+        # dialog.set_transient_for(self.app.ui.get_object("mainWindow"))
+        #
+        # store = self.app.ui.get_object("export_treestore") # type: Gtk.TreeStore
+        # store.clear()
+        # store.append(None, [True, False, "Library"])
+        # store.append(None, [True, False, "Decks"])
+        # store.append(None, [True, False, "Wants Lists"])
+        #
+        # lib_iter = store.get_iter_first()
+        # deck_iter = store.iter_next(lib_iter)
+        # wants_iter = store.iter_next(deck_iter)
+        #
+        # store.append(lib_iter, [True, True, "Untagged Cards"])
+        # for tag in self.app.tags.keys():
+        #     store.append(lib_iter, [True, True, tag])
+        #
+        # for name in self.app.wants.keys():
+        #     store.append(wants_iter, [True, True, name])
+        #
+        # self.app.ui.get_object("export_sel_tree").expand_all()
+        #
+        # response = dialog.run()
+        # dialog.hide()
+        #
+        # if not response == Gtk.ResponseType.OK:
+        #     return
+
+        # TODO Read treemodel to select witch parts to export
 
         dialog = Gtk.FileChooserDialog("Export Library", self.app.ui.get_object("mainWindow"),
                                        Gtk.FileChooserAction.SAVE,
