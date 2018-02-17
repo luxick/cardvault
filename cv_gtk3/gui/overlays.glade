@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.20.0 -->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <object class="GtkGrid" id="imageLoding">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="row_spacing">10</property>
+    <property name="row_homogeneous">True</property>
+    <property name="column_homogeneous">True</property>
+    <child>
+      <object class="GtkLabel">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="valign">start</property>
+        <property name="label" translatable="yes">Loading Image</property>
+        <property name="wrap">True</property>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">1</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkSpinner">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="halign">center</property>
+        <property name="valign">end</property>
+        <property name="active">True</property>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">0</property>
+      </packing>
+    </child>
+  </object>
+  <object class="GtkGrid" id="libEmpty">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="halign">center</property>
+    <property name="valign">center</property>
+    <property name="column_homogeneous">True</property>
+    <child>
+      <object class="GtkImage">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="no_show_all">True</property>
+        <property name="valign">end</property>
+        <property name="pixel_size">100</property>
+        <property name="icon_name">edit-find-symbolic</property>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="no_show_all">True</property>
+        <property name="valign">start</property>
+        <property name="label" translatable="yes">Use the Search View to add cards to your library</property>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">2</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="no_show_all">True</property>
+        <property name="valign">center</property>
+        <property name="label" translatable="yes">No cards in library</property>
+        <attributes>
+          <attribute name="weight" value="bold"/>
+          <attribute name="scale" value="2"/>
+        </attributes>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">1</property>
+      </packing>
+    </child>
+  </object>
+  <object class="GtkGrid" id="noResults">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="halign">center</property>
+    <property name="valign">center</property>
+    <property name="column_homogeneous">True</property>
+    <child>
+      <object class="GtkImage">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="no_show_all">True</property>
+        <property name="valign">end</property>
+        <property name="pixel_size">100</property>
+        <property name="icon_name">edit-find-symbolic</property>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="no_show_all">True</property>
+        <property name="valign">center</property>
+        <property name="label" translatable="yes">No Results</property>
+        <attributes>
+          <attribute name="weight" value="bold"/>
+          <attribute name="scale" value="2"/>
+        </attributes>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">1</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="no_show_all">True</property>
+        <property name="valign">start</property>
+        <property name="label" translatable="yes">No cards found</property>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">2</property>
+      </packing>
+    </child>
+  </object>
+  <object class="GtkGrid" id="pageNotFound">
+    <property name="name">Not Found</property>
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="halign">center</property>
+    <property name="valign">center</property>
+    <property name="row_spacing">10</property>
+    <property name="row_homogeneous">True</property>
+    <property name="column_homogeneous">True</property>
+    <child>
+      <object class="GtkImage">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="valign">end</property>
+        <property name="pixel_size">100</property>
+        <property name="icon_name">edit-find-symbolic</property>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="valign">start</property>
+        <property name="label" translatable="yes">Page not found</property>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">1</property>
+      </packing>
+    </child>
+  </object>
+  <object class="GtkGrid" id="searchOverlay">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="no_show_all">True</property>
+    <property name="halign">center</property>
+    <property name="valign">center</property>
+    <property name="row_spacing">10</property>
+    <property name="column_homogeneous">True</property>
+    <child>
+      <object class="GtkLabel">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="no_show_all">True</property>
+        <property name="valign">center</property>
+        <property name="label" translatable="yes">Search</property>
+        <attributes>
+          <attribute name="weight" value="bold"/>
+          <attribute name="scale" value="2"/>
+        </attributes>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">1</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="no_show_all">True</property>
+        <property name="valign">start</property>
+        <property name="label" translatable="yes">Use the entry on the left to search for cards</property>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">2</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkImage">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="no_show_all">True</property>
+        <property name="valign">end</property>
+        <property name="pixel_size">100</property>
+        <property name="icon_name">edit-find-symbolic</property>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">0</property>
+      </packing>
+    </child>
+  </object>
+  <object class="GtkGrid" id="wantsOverlay">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <property name="halign">center</property>
+    <property name="valign">center</property>
+    <property name="orientation">vertical</property>
+    <property name="row_spacing">10</property>
+    <property name="column_homogeneous">True</property>
+    <child>
+      <object class="GtkImage">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="no_show_all">True</property>
+        <property name="valign">end</property>
+        <property name="pixel_size">100</property>
+        <property name="icon_name">edit-find-symbolic</property>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="no_show_all">True</property>
+        <property name="valign">center</property>
+        <property name="label" translatable="yes">No Results</property>
+        <attributes>
+          <attribute name="weight" value="bold"/>
+          <attribute name="scale" value="2"/>
+        </attributes>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">1</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkLabel">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="no_show_all">True</property>
+        <property name="valign">start</property>
+        <property name="label" translatable="yes">Use the Search function to add cards to your wants</property>
+      </object>
+      <packing>
+        <property name="left_attach">0</property>
+        <property name="top_attach">2</property>
+      </packing>
+    </child>
+  </object>
+</interface>

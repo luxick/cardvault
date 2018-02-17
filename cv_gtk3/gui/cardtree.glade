@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.20.0 -->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <object class="GtkListStore" id="cardStore">
+    <columns>
+      <!-- column-name multiverse_id -->
+      <column type="gint"/>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name supertypes -->
+      <column type="gchararray"/>
+      <!-- column-name types -->
+      <column type="gchararray"/>
+      <!-- column-name rarity -->
+      <column type="gchararray"/>
+      <!-- column-name power -->
+      <column type="gchararray"/>
+      <!-- column-name toughness -->
+      <column type="gchararray"/>
+      <!-- column-name printings -->
+      <column type="gchararray"/>
+      <!-- column-name mana_cost -->
+      <column type="GdkPixbuf"/>
+      <!-- column-name cmc -->
+      <column type="gint"/>
+      <!-- column-name set_name -->
+      <column type="gchararray"/>
+      <!-- column-name color -->
+      <column type="gchararray"/>
+      <!-- column-name original_text -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkTreeModelFilter" id="cardStoreFiltered">
+    <property name="child_model">cardStore</property>
+  </object>
+  <object class="GtkTreeModelSort" id="cardStoreFilteredSorted">
+    <property name="model">cardStoreFiltered</property>
+  </object>
+  <object class="GtkTreeView" id="cardTree">
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <property name="model">cardStoreFilteredSorted</property>
+    <property name="search_column">2</property>
+    <property name="enable_grid_lines">horizontal</property>
+    <child internal-child="selection">
+      <object class="GtkTreeSelection">
+        <property name="mode">multiple</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkTreeViewColumn" id="col_name">
+        <property name="resizable">True</property>
+        <property name="sizing">autosize</property>
+        <property name="title" translatable="yes">Card Name</property>
+        <property name="sort_indicator">True</property>
+        <property name="sort_column_id">1</property>
+        <child>
+          <object class="GtkCellRendererText" id="cell_bold">
+            <property name="xpad">2</property>
+            <property name="weight">800</property>
+          </object>
+          <attributes>
+            <attribute name="foreground">11</attribute>
+            <attribute name="text">1</attribute>
+          </attributes>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkTreeViewColumn" id="col_text">
+        <property name="visible">False</property>
+        <property name="resizable">True</property>
+        <property name="sizing">autosize</property>
+        <property name="title" translatable="yes">Card Text</property>
+        <child>
+          <object class="GtkCellRendererText">
+            <property name="wrap_mode">word-char</property>
+            <property name="wrap_width">400</property>
+          </object>
+          <attributes>
+            <attribute name="foreground">11</attribute>
+            <attribute name="text">12</attribute>
+          </attributes>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkTreeViewColumn" id="col_types">
+        <property name="resizable">True</property>
+        <property name="sizing">autosize</property>
+        <property name="title" translatable="yes">Types</property>
+        <property name="sort_column_id">3</property>
+        <child>
+          <object class="GtkCellRendererText">
+            <property name="xpad">2</property>
+          </object>
+          <attributes>
+            <attribute name="foreground">11</attribute>
+            <attribute name="text">3</attribute>
+          </attributes>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkTreeViewColumn" id="col_rarity">
+        <property name="resizable">True</property>
+        <property name="sizing">autosize</property>
+        <property name="title" translatable="yes">Rarity</property>
+        <property name="sort_column_id">4</property>
+        <child>
+          <object class="GtkCellRendererText">
+            <property name="xpad">2</property>
+          </object>
+          <attributes>
+            <attribute name="foreground">11</attribute>
+            <attribute name="text">4</attribute>
+          </attributes>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkTreeViewColumn" id="col_set">
+        <property name="resizable">True</property>
+        <property name="sizing">autosize</property>
+        <property name="title" translatable="yes">Edition</property>
+        <property name="sort_column_id">10</property>
+        <child>
+          <object class="GtkCellRendererText">
+            <property name="xpad">2</property>
+          </object>
+          <attributes>
+            <attribute name="foreground">11</attribute>
+            <attribute name="text">10</attribute>
+          </attributes>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkTreeViewColumn" id="col_mana">
+        <property name="resizable">True</property>
+        <property name="sizing">autosize</property>
+        <property name="title" translatable="yes">Mana Cost</property>
+        <property name="sort_column_id">9</property>
+        <child>
+          <object class="GtkCellRendererPixbuf">
+            <property name="xalign">0.019999999552965164</property>
+          </object>
+          <attributes>
+            <attribute name="pixbuf">8</attribute>
+          </attributes>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

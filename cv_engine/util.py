@@ -14,8 +14,6 @@ class EngineConfig:
     duplicate_names_in_search = True
     # Log level for cv_engine
     log_level = 0
-    # Default path of cardvault configuration file
-    config_path = os.path.join(os.path.expanduser('~'), '.config', 'cardvault')
     # Name of the database file
     db_file = 'cardvault.db'
     # Default path to store temporary files
@@ -31,6 +29,16 @@ class EngineConstants:
     engine_version = 0.1
     # Location of manual wiki
     manual_location = 'https://github.com/luxick/cardvault'
+    # Default path of cardvault configuration file
+    config_path = os.path.join(os.path.expanduser('~'), '.config', 'cardvault')
+
+
+class GTKConstants:
+    """
+    Constants for the GTK Ui
+    """
+    # Directory in witch glade ui files are stored
+    glade_files = '/gui'
 
 
 class MTGConstants:
@@ -88,3 +96,13 @@ class Utilities:
                 cards.append(c)
             output = output + cards
         return output
+
+    @staticmethod
+    def expand_file_path(base_file, sub_dirs) -> str:
+        """
+        Get absolute file path relative to another file
+        :param base_file: Current file from witch to expand
+        :param sub_dirs: List of sub directories to desired file
+        :return: Full file path of chosen file
+        """
+        return os.path.join(os.path.dirname(base_file), *sub_dirs)

@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.20.0 -->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <object class="GtkMenu" id="libListPopup">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <signal name="show" handler="lib_tree_popup_showed" swapped="no"/>
+    <child>
+      <object class="GtkMenuItem" id="tagItem">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Tag Card</property>
+        <property name="use_underline">True</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="untagItem">
+        <property name="visible">True</property>
+        <property name="sensitive">False</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Untag Card</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_popup_untag_cards" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="removeItem">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Remove from Library</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_popup_remove_card" swapped="no"/>
+      </object>
+    </child>
+  </object>
+  <object class="GtkMenu" id="tagListPopup">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="tagRename">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Rename</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_tag_list_rename" object="tagTree" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="tagDelete">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Delete</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_tag_list_delete" object="tagTree" swapped="no"/>
+      </object>
+    </child>
+  </object>
+  <object class="GtkListStore" id="tagStore">
+    <columns>
+      <!-- column-name tag -->
+      <column type="gchararray"/>
+      <!-- column-name display -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkEntryCompletion" id="tagCompleter">
+    <property name="model">tagStore</property>
+    <property name="text_column">0</property>
+    <child>
+      <object class="GtkCellRendererText"/>
+      <attributes>
+        <attribute name="text">0</attribute>
+      </attributes>
+    </child>
+  </object>
+  <object class="GtkPaned" id="libraryView">
+    <property name="name">Library</property>
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <signal name="show" handler="do_reload_library" swapped="no"/>
+    <child>
+      <object class="GtkBox" id="lib_left_pane">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">4</property>
+        <child>
+          <object class="GtkScrolledWindow">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="hexpand">True</property>
+            <property name="vexpand">True</property>
+            <property name="shadow_type">in</property>
+            <child>
+              <object class="GtkTreeView" id="tagTree">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="vexpand">True</property>
+                <property name="model">tagStore</property>
+                <property name="search_column">1</property>
+                <signal name="button-press-event" handler="do_tag_tree_press_event" swapped="no"/>
+                <signal name="row-activated" handler="on_tag_selected" object="tagTreeSelection" swapped="no"/>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection" id="tagTreeSelection"/>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="col_tag">
+                    <property name="visible">False</property>
+                    <property name="title" translatable="yes">tag</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="col_tag_display">
+                    <property name="title" translatable="yes">Tags</property>
+                    <property name="clickable">True</property>
+                    <property name="alignment">0.5</property>
+                    <property name="sort_indicator">True</property>
+                    <property name="sort_column_id">0</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="cell_tag"/>
+                      <attributes>
+                        <attribute name="text">1</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkButton" id="showUntagged">
+                <property name="label" translatable="yes">Untagged</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="do_show_untagged_clicked" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="showAllButton">
+                <property name="label" translatable="yes">All</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="do_show_all_clicked" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="addTagBox">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="vexpand">False</property>
+            <child>
+              <object class="GtkEntry" id="newTagEntry">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
+                <property name="placeholder_text" translatable="yes">New Tag</property>
+                <signal name="changed" handler="do_tag_entry_changed" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="newTagButton">
+                <property name="label" translatable="yes">Add</property>
+                <property name="visible">True</property>
+                <property name="sensitive">False</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="do_new_tag_clicked" object="newTagEntry" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+      <packing>
+        <property name="resize">False</property>
+        <property name="shrink">True</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkBox" id="lib_right_pane">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">4</property>
+        <child>
+          <object class="GtkBox" id="libTools">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">2</property>
+            <property name="margin_right">2</property>
+            <property name="vexpand">False</property>
+            <property name="spacing">2</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Showing:</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="lib_title">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">5</property>
+                <property name="margin_right">5</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSearchEntry" id="searchLibEntry">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="primary_icon_name">edit-find-symbolic</property>
+                <property name="primary_icon_activatable">False</property>
+                <property name="primary_icon_sensitive">False</property>
+                <property name="placeholder_text" translatable="yes">Search</property>
+                <signal name="changed" handler="do_refilter_library" object="libraryContainer" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkComboBoxText" id="tagCardCombo">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="has_entry">True</property>
+                <child internal-child="entry">
+                  <object class="GtkEntry" id="tagCardEntry">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="caps_lock_warning">False</property>
+                    <property name="placeholder_text" translatable="yes">Tag selected cards</property>
+                    <property name="completion">tagCompleter</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="tagCardButton">
+                <property name="label" translatable="yes">Tag card(s)</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="do_tag_cards" object="tagCardEntry" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">4</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkOverlay" id="libraryContainer">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="hexpand">True</property>
+            <property name="vexpand">True</property>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+      <packing>
+        <property name="resize">True</property>
+        <property name="shrink">True</property>
+      </packing>
+    </child>
+  </object>
+</interface>

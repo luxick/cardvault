@@ -2,10 +2,8 @@ import json
 import os
 import itertools
 
-from jsondiff import diff
-
 from cv_engine.database import CardvaultDB
-from cv_engine.util import EngineConfig, Utilities
+from cv_engine.util import EngineConfig, EngineConstants, Utilities
 
 
 class CardvaultEngine:
@@ -16,7 +14,7 @@ class CardvaultEngine:
         """
         if config_file:
             Utilities.apply_config(config_file)
-        db_file_path = os.path.join(EngineConfig.config_path, EngineConfig.db_file)
+        db_file_path = os.path.join(EngineConstants.config_path, EngineConfig.db_file)
         self.database = CardvaultDB(db_file_path)
 
     def get_card(self, card_id):

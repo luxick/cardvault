@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.20.0 -->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <object class="GtkListStore" id="wantsListsStore">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name Displayname -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkPaned" id="wantsView">
+    <property name="name">Wants</property>
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <signal name="show" handler="do_reload_wants" swapped="no"/>
+    <child>
+      <object class="GtkBox" id="wantsLeftPane">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkScrolledWindow">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="hscrollbar_policy">never</property>
+            <property name="shadow_type">in</property>
+            <child>
+              <object class="GtkTreeView" id="wantsListsTree">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="hexpand">True</property>
+                <property name="vexpand">True</property>
+                <property name="model">wantsListsStore</property>
+                <property name="search_column">0</property>
+                <signal name="button-press-event" handler="do_wants_tree_press_event" swapped="no"/>
+                <signal name="row-activated" handler="on_want_list_selected" object="wantsTreeSelection" swapped="no"/>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection" id="wantsTreeSelection"/>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="col_name">
+                    <property name="title" translatable="yes">Wants List</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="cell"/>
+                      <attributes>
+                        <attribute name="text">1</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkEntry" id="addWantsListEntry">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="placeholder_text" translatable="yes">New Wants List</property>
+                <signal name="activate" handler="on_new_wants_list_clicked" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="addWatnsListButton">
+                <property name="label" translatable="yes">Add</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="on_new_wants_list_clicked" object="addWantsListEntry" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+      <packing>
+        <property name="resize">False</property>
+        <property name="shrink">True</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkBox" id="wantsRightPane">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkBox" id="wantsToolBar">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="margin_left">2</property>
+            <property name="margin_right">2</property>
+            <property name="spacing">2</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Showing:</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="wants_title">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="margin_left">2</property>
+                <property name="margin_right">2</property>
+                <attributes>
+                  <attribute name="weight" value="semibold"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkOverlay" id="wantsListContainer">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="hexpand">True</property>
+            <property name="vexpand">True</property>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+      <packing>
+        <property name="resize">True</property>
+        <property name="shrink">True</property>
+      </packing>
+    </child>
+  </object>
+  <object class="GtkMenu" id="wants_cardListPopup">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="wntCrdLst_add">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Add to Library</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_want_cards_add_activated" swapped="no"/>
+        <accelerator key="a" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="wntCrdLst_remove">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Remove Card</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="on_want_cards_remove_activated" swapped="no"/>
+        <accelerator key="Delete" signal="activate"/>
+      </object>
+    </child>
+  </object>
+  <object class="GtkMenu" id="wants_wantsListPopup">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkMenuItem" id="wantsListRenameItem">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Rename</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_rename_wants_list" object="wantsListsTree" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkMenuItem" id="wantsListDeleteItem">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Delete</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="do_delete_wants_list" object="wantsListsTree" swapped="no"/>
+      </object>
+    </child>
+  </object>
+</interface>
