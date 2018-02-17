@@ -18,6 +18,8 @@ class EngineConfig:
     db_file = 'cardvault.db'
     # Default path to store temporary files
     cache_path = os.path.join(os.path.expanduser('~'), '.cache', 'cardvault')
+    # Icon cache path
+    icon_cache_path = os.path.join(os.path.expanduser('~'), '.cache', 'cardvault', 'icons')
 
 
 class EngineConstants:

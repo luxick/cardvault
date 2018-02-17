@@ -74,16 +74,6 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkMenuItem" id="main_load_data">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="tooltip_text" translatable="yes">Download card data to hard drive</property>
-                        <property name="label" translatable="yes">Download Card Data</property>
-                        <property name="use_underline">True</property>
-                        <signal name="activate" handler="do_download_card_data" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
                       <object class="GtkMenuItem">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
@@ -94,21 +84,21 @@
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <child>
-                              <object class="GtkMenuItem" id="main_clr_usr_data">
+                              <object class="GtkMenuItem" id="delete_user_library">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">Clear User Data</property>
                                 <property name="use_underline">True</property>
-                                <signal name="activate" handler="do_card_data_user" swapped="no"/>
+                                <signal name="activate" handler="do_delete_user_library" swapped="no"/>
                               </object>
                             </child>
                             <child>
-                              <object class="GtkMenuItem" id="main_clr_crd_data">
+                              <object class="GtkMenuItem" id="delete_card_data">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="label" translatable="yes">Clear Card Data</property>
                                 <property name="use_underline">True</property>
-                                <signal name="activate" handler="do_card_data_card" swapped="no"/>
+                                <signal name="activate" handler="do_delete_card_data" swapped="no"/>
                               </object>
                             </child>
                           </object>
@@ -155,7 +145,7 @@
                         <property name="label" translatable="yes">Search</property>
                         <property name="use_underline">True</property>
                         <property name="draw_as_radio">True</property>
-                        <signal name="activate" handler="on_view_changed" swapped="no"/>
+                        <signal name="activate" handler="do_change_view" swapped="no"/>
                         <accelerator key="1" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
                     </child>
@@ -168,7 +158,7 @@
                         <property name="use_underline">True</property>
                         <property name="draw_as_radio">True</property>
                         <property name="group">searchViewItem</property>
-                        <signal name="activate" handler="on_view_changed" swapped="no"/>
+                        <signal name="activate" handler="do_change_view" swapped="no"/>
                         <accelerator key="2" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
                     </child>
@@ -181,7 +171,7 @@
                         <property name="use_underline">True</property>
                         <property name="draw_as_radio">True</property>
                         <property name="group">searchViewItem</property>
-                        <signal name="activate" handler="on_view_changed" swapped="no"/>
+                        <signal name="activate" handler="do_change_view" swapped="no"/>
                         <accelerator key="3" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
                     </child>
@@ -200,12 +190,12 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkMenuItem" id="prefs_item">
+                      <object class="GtkMenuItem" id="open_prefs">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Preferences</property>
                         <property name="use_underline">True</property>
-                        <signal name="activate" handler="prefs_open" swapped="no"/>
+                        <signal name="activate" handler="do_prefs_open" swapped="no"/>
                         <accelerator key="p" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
                     </child>
