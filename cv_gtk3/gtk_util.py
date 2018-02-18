@@ -17,6 +17,22 @@ class GTKUtilities:
     precon_icon_cache = {}
 
     @staticmethod
+    def load_icon_cache(path):
+        icons = {}
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        files = os.listdir(path)
+        for file in files:
+            try:
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file(os.path.join(path, file))
+                # Strip filename extension
+                icon_name = os.path.splitext(file)[0]
+                icons[icon_name] = pixbuf
+            except Exception as ex:
+                print('Error while loading icon file "{}"'.format(ex))
+        return icons
+
+    @staticmethod
     def get_mana_icons(mana_string):
         """ Return the combined mana symbols for a mana string
         :param mana_string: String in the format '{3}{U}{B}'
@@ -31,6 +47,9 @@ class GTKUtilities:
         except KeyError:
             icon = GTKUtilities.create_mana_icons(mana_string)
             GTKUtilities.precon_icon_cache[icon_name] = icon
+        # Scale icon for display
+        if icon:
+            icon = icon.scale_simple(icon.get_width() / 5, icon.get_height() / 5, GdkPixbuf.InterpType.HYPER)
         return icon
 
     @staticmethod
@@ -42,11 +61,13 @@ class GTKUtilities:
         # Compute horizontal size for the final image
         size = len(glyphs) * 105
         image = PImage.new("RGBA", (size, 105))
-        for icon in glyphs:
-            x_pos = glyphs.index(icon) * 105
+        for index, icon in enumerate(glyphs):
+            x_pos = index * 105
             try:
-                loaded = GTKUtilities.mana_icons[icon]
+                # Try loading mana icon and converting to PIL.Image for combining
+                loaded = GTKUtilities.pixbuf_to_image(GTKUtilities.mana_icons[icon])
             except KeyError:
+                print('Mana icon "{}" is not loaded.'.format(icon))
                 return
             image.paste(loaded, (x_pos, 0))
         # Save pre build icon file
@@ -54,8 +75,21 @@ class GTKUtilities:
         image.save(path)
         try:
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(path)
-            pixbuf = pixbuf.scale_simple(image.width / 5, image.height / 5, GdkPixbuf.InterpType.HYPER)
         except Exception as err:
             print(err)
             return
         return pixbuf
+
+    @staticmethod
+    def pixbuf_to_image(pix):
+        """Convert gdkpixbuf to PIL image"""
+        data = pix.get_pixels()
+        w = pix.props.width
+        h = pix.props.height
+        stride = pix.props.rowstride
+        mode = "RGB"
+        if pix.props.has_alpha:
+            mode = "RGBA"
+        im = PImage.frombytes(mode, (w, h), data, "raw", mode, stride)
+
+        return im

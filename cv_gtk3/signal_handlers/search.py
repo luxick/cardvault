@@ -3,10 +3,12 @@ import os
 from cv_gtk3.card_view import CardView
 from cv_gtk3.setting import GUISettings
 
+from cv_gtk3.gtkui import CardvaultGTK
+
 
 class SearchPageHandlers:
     """ Class for handling Signals from the search page """
-    def __init__(self, app):
+    def __init__(self, app: 'CardvaultGTK'):
         """ Constructor
         :param app: Reference to an CardvaultGTK object
         """
@@ -14,17 +16,26 @@ class SearchPageHandlers:
 
         # Build the card view
         overlay = self.app.ui.get_object("searchResults")
-        card_list = CardView(ui_file=os.path.join(GUISettings.glade_file_path, 'cardtree.glade'), filtered=False)
-        card_list.set_name("resultsScroller")
+        self.card_list = CardView(ui_file=os.path.join(GUISettings.glade_file_path, 'cardtree.glade'), filtered=False)
+        self.card_list.set_name("resultsScroller")
         # TODO Context menu for card view
         # card_list.tree.connect("row-activated", self.on_search_card_selected)
         # card_list.selection.connect("changed", self.on_search_selection_changed)
-        overlay.add(card_list)
+        overlay.add(self.card_list)
         overlay.add_overlay(self.app.ui.get_object("searchOverlay"))
         overlay.show_all()
 
-    def do_search_cards(self, *args):
-        pass
+    def do_search_cards(self, search_entry):
+        """ Search cards in database based on user input and display them in a card view
+        :param search_entry: Search entry widget
+        """
+        search_term = search_entry.get_text()
+        results = self.app.engine.search_by_name(search_term)
+        self.card_list.update(results)
+        # Switch Overlay off and set info diaplay
+        self.app.ui.get_object("searchOverlay").set_visible(False)
+        self.app.ui.get_object("search_title_label").set_visible(True)
+        self.app.ui.get_object("search_title").set_text(search_term)
 
     @staticmethod
     def do_clear_mana_filter(button_grid):

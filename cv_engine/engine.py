@@ -45,6 +45,13 @@ class CardvaultEngine:
                 card_id_list[card_id] = card_objects[card_id]
         return categories
 
+    def search_by_name(self, search_term):
+        """ Search database for cards witch contain the search string in their names
+        :param search_term: Part of a card name
+        :return: List of matched cards
+        """
+        return self.database.card_search_by_name(search_term)
+
 
 if __name__ == "__main__":
     engine = CardvaultEngine()

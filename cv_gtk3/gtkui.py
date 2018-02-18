@@ -4,11 +4,12 @@ import os
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 
-from cv_engine import engine
+from cv_engine import engine, util
 
 from cv_gtk3.main_window import MainWindowFunctions
 from cv_gtk3.setting import GUISettings
 from cv_gtk3.signal_handlers import handlers
+from cv_gtk3.gtk_util import GTKUtilities
 
 
 class CardvaultGTK(MainWindowFunctions):
@@ -27,6 +28,16 @@ class CardvaultGTK(MainWindowFunctions):
         GUISettings.pages = {
             "search": self.ui.get_object("searchView"),
         }
+        # Verify that cache directories exist
+        if not os.path.isdir(util.EngineConfig.cache_path):
+            os.mkdir(util.EngineConfig.cache_path)
+        if not os.path.isdir(util.EngineConfig.icon_cache_path):
+            os.mkdir(util.EngineConfig.icon_cache_path)
+        # Load single mana icons
+        GTKUtilities.mana_icons = GTKUtilities.load_icon_cache(os.path.join(os.path.dirname(__file__), 'resources',
+                                                                            'mana'))
+        # Load the the pre constructed icon cache
+        GTKUtilities.precon_icon_cache = GTKUtilities.load_icon_cache(util.EngineConfig.icon_cache_path)
         # Call constructor of superclasses
         MainWindowFunctions.__init__(self, self.ui)
         # Create Signal handlers and connect them to the UI
