@@ -8,9 +8,8 @@ from cv_engine.util import MTGConstants
 
 class CardView(Gtk.ScrolledWindow):
     """ Class for displaying a list of cards in an GTKTreeView """
-    def __init__(self, ui_file, filtered):
+    def __init__(self, filtered):
         """ Constructor for a card list display
-        :param ui_file: Full path to an CardView glade file
         :param filtered: Should the card list be filterable
         """
         self.filtered = filtered
@@ -21,12 +20,13 @@ class CardView(Gtk.ScrolledWindow):
         self.set_vexpand(True)
         # Build UI
         self.ui = Gtk.Builder()
-        self.ui.add_from_file(ui_file)
+        self.ui.add_from_string(GTKUtilities.load_ui_resource('cardtree.glade'))
         self.tree = self.ui.get_object('cardTree')
         self.store = self.ui.get_object('cardStore')
         self.store.set_sort_func(4, self.compare_rarity, None)
         # Add the TreeView
         self.add(self.tree)
+        #self.tree.connect("row-activated", self.on_row_double_click)
 
     def get_selected_cards(self):
         """ Get the currently selected cards in the TreeView

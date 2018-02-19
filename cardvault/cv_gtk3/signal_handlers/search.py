@@ -1,14 +1,12 @@
 import os
 
 from cv_gtk3.card_view import CardView
-from cv_gtk3.setting import GUISettings
-
-from cv_gtk3.gtkui import CardvaultGTK
+from cv_gtk3.gtk_util import GTKUtilities
 
 
 class SearchPageHandlers:
     """ Class for handling Signals from the search page """
-    def __init__(self, app: 'CardvaultGTK'):
+    def __init__(self, app):
         """ Constructor
         :param app: Reference to an CardvaultGTK object
         """
@@ -16,7 +14,7 @@ class SearchPageHandlers:
 
         # Build the card view
         overlay = self.app.ui.get_object("searchResults")
-        self.card_list = CardView(ui_file=os.path.join(GUISettings.glade_file_path, 'cardtree.glade'), filtered=False)
+        self.card_list = CardView(filtered=False)
         self.card_list.set_name("resultsScroller")
         # TODO Context menu for card view
         # card_list.tree.connect("row-activated", self.on_search_card_selected)

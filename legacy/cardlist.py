@@ -6,7 +6,6 @@ from cardvault import application
 from gi.repository import Gtk, GdkPixbuf, Gdk
 
 from typing import Dict, Type
-from mtgsdk import Card
 
 import time
 gi.require_version('Gtk', '3.0')
@@ -14,7 +13,7 @@ gi.require_version('Gdk', '3.0')
 
 
 class CardList(Gtk.ScrolledWindow):
-    def __init__(self, filtered, app: 'application.Application', row_colors: Dict[str, str]):
+    def __init__(self, filtered, app, row_colors: Dict[str, str]):
         Gtk.ScrolledWindow.__init__(self)
         self.set_hexpand(True)
         self.set_vexpand(True)
@@ -49,7 +48,7 @@ class CardList(Gtk.ScrolledWindow):
             output[card_id] = card
         return output
 
-    def update(self, library: Dict[str, Type[Card]]):
+    def update(self, library: Dict[str, dict]):
         self.store.clear()
         if library is None:
             return
@@ -63,22 +62,24 @@ class CardList(Gtk.ScrolledWindow):
         all_wants = self.app.get_wanted_card_ids()
 
         for card in library.values():
-            if card.multiverse_id is not None:
+            if card['multiverse_id'] is not None:
                 color = self.get_row_color(card, self.app.library, all_wants, self.row_colors)
-                mana_cost = None if card.types.__contains__("Land") else self.app.get_mana_icons(card.mana_cost)
-                item = [card.multiverse_id,
-                        card.name,
-                        " ".join(card.supertypes if card.supertypes else ""),
-                        " ".join(card.types),
-                        card.rarity,
-                        card.power,
-                        card.toughness,
-                        ", ".join(card.printings),
+                mana_cost = None
+                if not card.get('types').__contains__("Land"):
+                    mana_cost = self.app.get_mana_icons(card.get('mana_cost'))
+                item = [card['multiverse_id'],
+                        card['name'],
+                        " ".join(card.get('supertypes') or ""),
+                        " ".join(card.get('types') or ""),
+                        card.get('rarity'),
+                        card.get('power'),
+                        card.get('toughness'),
+                        ", ".join(card.get('printings') or ""),
                         mana_cost,
-                        card.cmc,
-                        card.set_name,
+                        card.get('cmc'),
+                        card.get('set_name'),
                         color,
-                        card.original_text]
+                        card.get('original_text')]
                 self.store.append(item)
         end = time.time()
         util.log("Time to build Table: " + str(round(end - start, 3)) + "s", util.LogLevel.Info)
@@ -103,9 +104,9 @@ class CardList(Gtk.ScrolledWindow):
 
     @staticmethod
     def get_row_color(card, lib: dict, wants: dict, colors: dict) -> str:
-        if lib.__contains__(card.multiverse_id):
+        if lib.__contains__(card.get('multiverse_id')):
             return colors["owned"]
-        elif wants.__contains__(card.multiverse_id):
+        elif wants.__contains__(card.get('multiverse_id')):
             return colors["wanted"]
         else:
             return colors["unowned"]

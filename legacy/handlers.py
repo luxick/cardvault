@@ -1,7 +1,7 @@
-import gi
+import math
 import sys
 
-import math
+import gi
 
 gi.require_version('Gtk', '3.0')
 import time, datetime
@@ -10,11 +10,9 @@ import threading
 from gi.repository import Gtk, GObject
 
 from cardvault import util, application
-from mtgsdk import Card, MtgException
-
-from cardvault.search import SearchHandlers
-from cardvault.library import LibraryHandlers
-from cardvault.wants import WantsHandlers
+from legacy.search import SearchHandlers
+from legacy.library import LibraryHandlers
+from legacy.wants import WantsHandlers
 
 
 class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
@@ -203,7 +201,7 @@ class Handlers(SearchHandlers, LibraryHandlers, WantsHandlers):
         self.cancel_token = False
         util.log("Download thread ended", util.LogLevel.Info)
 
-    def download_failed(self, err: MtgException):
+    def download_failed(self, err):
         # Delete Dialog
         self.app.ui.get_object("loadDataDialog").hide()
         self.app.push_status("Download canceled")

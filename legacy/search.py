@@ -1,7 +1,9 @@
 import time
 from urllib.error import URLError, HTTPError
-from mtgsdk import Card
 from cardvault import application, cardlist, util
+
+# Deprecated
+from mtgsdk import Card
 
 import gi
 gi.require_version('Gtk', '3.0')
@@ -189,8 +191,8 @@ class SearchHandlers:
         name = self.app.ui.get_object("setEntry").get_text()
         output["set"] = ""
         for mtgset in self.app.get_all_sets().values():
-            if mtgset.name == name:
-                output["set"] = mtgset.code
+            if mtgset['name'] == name:
+                output["set"] = mtgset['code']
         return output
 
     def search_cards(self, term: str, filters: dict) -> dict:
@@ -220,6 +222,7 @@ class SearchHandlers:
                     .where(rarity=filters["rarity"]) \
                     .where(pageSize=50) \
                     .where(page=1).all()
+                cards = [card.__dict__ for card in cards]
                 end = time.time()
                 util.log("Card info fetched in {}s".format(round(end - start, 3)), util.LogLevel.Info)
             except (URLError, HTTPError) as err:
@@ -235,10 +238,7 @@ class SearchHandlers:
             return {}
         util.log("Found " + str(len(cards)) + " cards", util.LogLevel.Info)
 
-        output = {}
-        for card in cards:
-            output[card.multiverse_id] = card
-        return output
+        return {card['multiverse_id']: card for card in cards}
 
     # ---------------------------------Search Tree----------------------------------------------
 
@@ -312,8 +312,8 @@ class SearchHandlers:
         unique_names = []
         # Reverse cardlist so we get the version with the most modern art
         for card in reversed(cards):
-            if card.name not in unique_names:
-                unique_names.append(card.name)
+            if card['name'] not in unique_names:
+                unique_names.append(card['name'])
                 unique_cards.append(card)
         return unique_cards
 
@@ -334,7 +334,7 @@ class SearchHandlers:
         """ Initialize model for set entry """
         set_store = Gtk.ListStore(str, str)
         for mtgset in self.app.get_all_sets().values():
-            set_store.append([mtgset.name, mtgset.code])
+            set_store.append([mtgset.get('name'), mtgset.get('code')])
         completer = Gtk.EntryCompletion()
         completer.set_model(set_store)
         completer.set_text_column(0)

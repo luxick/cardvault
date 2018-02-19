@@ -35,14 +35,6 @@ class EngineConstants:
     config_path = os.path.join(os.path.expanduser('~'), '.config', 'cardvault')
 
 
-class GTKConstants:
-    """
-    Constants for the GTK Ui
-    """
-    # Directory in witch glade ui files are stored
-    glade_files = '/gui'
-
-
 class MTGConstants:
     """
     This class contains constants that can be used within the whole program
@@ -98,13 +90,3 @@ class Utilities:
                 cards.append(c)
             output = output + cards
         return output
-
-    @staticmethod
-    def expand_file_path(base_file, sub_dirs) -> str:
-        """
-        Get absolute file path relative to another file
-        :param base_file: Current file from witch to expand
-        :param sub_dirs: List of sub directories to desired file
-        :return: Full file path of chosen file
-        """
-        return os.path.join(os.path.dirname(base_file), *sub_dirs)

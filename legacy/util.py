@@ -255,7 +255,7 @@ def net_load_set_list() -> dict:
     except MtgException as err:
         log(str(err), LogLevel.Error)
         return {}
-    return sets
+    return [set.__dict__ for set in sets]
 
 
 def load_sets(filename: str) -> dict:
@@ -272,8 +272,8 @@ def load_sets(filename: str) -> dict:
     sets = pickle.load(open(filename, 'rb'))
     # Sort the loaded sets based on the sets name
     output = {}
-    for set in sorted(sets, key=lambda x: x.name):
-        output[set.code] = set
+    for set in sorted(sets, key=lambda x: x.get('name')):
+        output[set.get('code')] = set
     return output
 
 
@@ -343,23 +343,23 @@ def load_dummy_image(size_x: int, size_y: int) -> GdkPixbuf:
                                                   + '/resources/images/dummy.jpg', size_x, size_y)
 
 
-def load_card_image(card: Card, size_x: int, size_y: int, cache: dict) -> GdkPixbuf:
+def load_card_image(card: dict, size_x: int, size_y: int, cache: dict) -> GdkPixbuf:
     """ Retrieve an card image from cache or alternatively load from gatherer"""
     try:
-        image = cache[card.multiverse_id]
+        image = cache[card.get('multiverse_id')]
     except KeyError:
-        log("No local image for " + card.name + ". Loading from " + card.image_url, LogLevel.Info)
+        log("No local image for " + card.get('name') + ". Loading from " + card.get('image_url'), LogLevel.Info)
         filename, image = net_load_card_image(card, size_x, size_y)
-        cache[card.multiverse_id] = image
+        cache[card.get('multiverse_id')] = image
     return image
 
 
-def net_load_card_image(card, size_x: int, size_y: int) -> (str, GdkPixbuf):
-    url = card.image_url
+def net_load_card_image(card: dict, size_x: int, size_y: int) -> (str, GdkPixbuf):
+    url = card.get('image_url')
     if url is None:
-        log("No Image URL for " + card.name, LogLevel.Warning)
+        log("No Image URL for " + card.get('name'), LogLevel.Warning)
         return load_dummy_image(size_x, size_y)
-    filename = IMAGE_CACHE_PATH + str(card.multiverse_id) + ".png"
+    filename = IMAGE_CACHE_PATH + str(card.get('multiverse_id')) + ".png"
     request.urlretrieve(url, filename)
     return filename, GdkPixbuf.Pixbuf.new_from_file_at_size(filename, size_x, size_y)
 

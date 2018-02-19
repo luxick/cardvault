@@ -1,5 +1,6 @@
-import gi
 import os
+
+import gi
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
@@ -17,13 +18,11 @@ class CardvaultGTK(MainWindowFunctions):
     def __init__(self):
         # Start engine (without config file)
         self.engine = engine.CardvaultEngine()
-        # Set Glade file location
-        GUISettings.glade_file_path = os.path.join(os.path.dirname(__file__), 'gui')
         # Load Glade files
         glade_files = ['mainwindow.glade', 'search.glade', 'overlays.glade']
         self.ui = Gtk.Builder()
         for file in glade_files:
-            self.ui.add_from_file(os.path.join(GUISettings.glade_file_path, file))
+            self.ui.add_from_string(GTKUtilities.load_ui_resource(file))
         # Set pages for the ui to use
         GUISettings.pages = {
             "search": self.ui.get_object("searchView"),
@@ -34,8 +33,7 @@ class CardvaultGTK(MainWindowFunctions):
         if not os.path.isdir(util.EngineConfig.icon_cache_path):
             os.mkdir(util.EngineConfig.icon_cache_path)
         # Load single mana icons
-        GTKUtilities.mana_icons = GTKUtilities.load_icon_cache(os.path.join(os.path.dirname(__file__), 'resources',
-                                                                            'mana'))
+        GTKUtilities.mana_icons = GTKUtilities.load_icon_cache(os.path.join(GTKUtilities.resources_path, 'mana'))
         # Load the the pre constructed icon cache
         GTKUtilities.precon_icon_cache = GTKUtilities.load_icon_cache(util.EngineConfig.icon_cache_path)
         # Call constructor of superclasses
@@ -48,7 +46,12 @@ class CardvaultGTK(MainWindowFunctions):
         self.hide_initial_widgets()
         self.switch_page('search')
 
-if __name__ == '__main__':
+
+def main():
     CardvaultGTK()
     Gtk.main()
+
+if __name__ == '__main__':
+    main()
+
 

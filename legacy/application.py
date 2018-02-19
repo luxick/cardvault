@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 import gi
 import os
 import copy
@@ -56,8 +54,8 @@ class Application:
         self.wants = Dict[str, List[Type[mtgsdk.Card]]]
         self.load_user_data()
 
-        self.ui.get_object('statusbar_icon').set_from_icon_name(
-            util.online_icons[self.is_online()], Gtk.IconSize.BUTTON)
+        self.ui.get_object('statusbar_icon').set_from_icon_name(util.online_icons[self.is_online()],
+                                                                Gtk.IconSize.BUTTON)
         self.ui.get_object('statusbar_icon').set_tooltip_text(util.online_tooltips[self.is_online()])
 
         self.handlers = handlers.Handlers(self)
@@ -95,35 +93,34 @@ class Application:
         builder.add_from_file(util.get_ui_filename("detailswindow.glade"))
         builder.add_from_file(util.get_ui_filename("overlays.glade"))
         window = builder.get_object("cardDetails")
-        window.set_title(card.name)
+        window.set_title(card.get('name'))
         # Card Image
         container = builder.get_object("imageContainer")
         pixbuf = util.load_card_image(card, 63 * 5, 88 * 5, self.image_cache)
         image = Gtk.Image().new_from_pixbuf(pixbuf)
         container.add(image)
         # Name
-        builder.get_object("cardName").set_text(card.name)
+        builder.get_object("cardName").set_text(card.get('name'))
         # Types
         supertypes = ""
-        if card.subtypes is not None:
-            supertypes = " - " + " ".join(card.subtypes)
-        types = " ".join(card.types) + supertypes
+        if card.get('subtypes'):
+            supertypes = " - " + " ".join(card.get('subtypes'))
+        types = " ".join(card.get('types')) + supertypes
         builder.get_object("cardTypes").set_text(types)
         # Rarity
-        builder.get_object("cardRarity").set_text(card.rarity if card.rarity else "")
+        builder.get_object("cardRarity").set_text(card.get('rarity') or "")
         # Release
-        builder.get_object("cardReleaseDate").set_text(card.release_date if card.release_date else "")
+        builder.get_object("cardReleaseDate").set_text(card.get('release_date') or "")
         # Set
-        builder.get_object("cardSet").set_text(card.set_name)
+        builder.get_object("cardSet").set_text(card.get('set_name'))
         # Printings
-        prints = []
-        for set in card.printings:
-            prints.append(self.get_all_sets()[set].name)
+        all_sets = self.get_all_sets()
+        prints = [all_sets[set_name].get('name') for set_name in card.get('printings')]
         builder.get_object("cardPrintings").set_text(", ".join(prints))
         # Legalities
         grid = builder.get_object("legalitiesGrid")
         rows = 1
-        for legality in card.legalities if card.legalities else {}:
+        for legality in card.get('legalities') or {}:
             date_label = Gtk.Label()
             date_label.set_halign(Gtk.Align.END)
             text_label = Gtk.Label()
@@ -140,9 +137,9 @@ class Application:
         grid.show_all()
 
         # Rulings
-        if card.rulings:
+        if card.get('rulings'):
             store = builder.get_object("rulesStore")
-            for rule in card.rulings:
+            for rule in card.get('rulings'):
                 store.append([rule["date"], rule["text"]])
         else:
             builder.get_object("ruleBox").set_visible(False)
@@ -330,7 +327,7 @@ class Application:
     def get_wanted_card_ids(self) -> List[str]:
         all_ids = []
         for cards in self.wants.values():
-            next_ids = [card.multiverse_id for card in cards]
+            next_ids = [card['multiverse_id'] for card in cards]
             all_ids = list(set(all_ids) | set(next_ids))
         return all_ids
 
@@ -442,10 +439,7 @@ class Application:
 
     def get_all_sets(self) -> dict:
         if not self.is_online():
-            l = self.db.set_get_all()
-            out = {}
-            for s in l:
-                out[s.code] = s
+            out = {s['code']: s for s in self.db.set_get_all()}
         else:
             out = util.load_sets(util.get_root_filename('sets'))
         return out

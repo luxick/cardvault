@@ -1,8 +1,0 @@
-[Desktop Entry]
-Version=0.5
-Type=Application
-Name=Card Vault
-Comment=Organize and plan your MTG card collection
-TryExec=cardvault
-Exec=cardvault
-Icon=cardvault
