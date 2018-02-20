@@ -9,7 +9,7 @@ try:
 except ImportError as err:
     print('PIL imaging library is not installed')
 
-from cv_engine.util import EngineConfig
+from cv_core.util import CoreConfig
 
 
 class GTKUtilities:
@@ -64,7 +64,7 @@ class GTKUtilities:
                 return
             image.paste(loaded, (x_pos, 0))
         # Save pre build icon file
-        path = os.path.join(EngineConfig.icon_cache_path, "_".join(glyphs) + ".png")
+        path = os.path.join(CoreConfig.icon_cache_path, "_".join(glyphs) + ".png")
         image.save(path)
         try:
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(path)

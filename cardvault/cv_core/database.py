@@ -1,8 +1,8 @@
 import sqlite3
 import ast
 
-from cv_engine.models import Card, Set
-from cv_engine.util import EngineConfig, EngineConstants, MTGConstants
+from cv_core.models import Card, Set
+from cv_core.util import MTGConstants
 
 
 class CardvaultDB:
@@ -126,7 +126,7 @@ class CardvaultDB:
         """
         Shorthand for inserting many cards at once
         Uses a single database connection for all commits
-        :param card_list: list of cv_engine.models.Card objects
+        :param card_list: list of cv_core.models.Card objects
         """
         con = sqlite3.connect(self.db_file)
         with con:
@@ -136,7 +136,7 @@ class CardvaultDB:
     def card_insert(self, card, connection=None):
         """
         Insert a single card into the database
-        :param card: An cv_engine.models.Card object
+        :param card: An cv_core.models.Card object
         :param connection: (Optional) supply a database connection to use. It will not be closed after the function
         ends
         """
@@ -188,7 +188,7 @@ class CardvaultDB:
         """
         Load a single card from database
         :param card_id: multiverse_id of the card
-        :return: an cv_engine.models.Card object
+        :return: an cv_core.models.Card object
         """
         cur = self.connection.cursor()
         cur.row_factory = sqlite3.Row
@@ -222,7 +222,7 @@ class CardvaultDB:
         Search for card by their name.
         Search results are limited to 50 results.
         :param search_term: Search String
-        :return: List of 'cv_engine.models.Card' objects
+        :return: List of 'cv_core.models.Card' objects
         """
         cur = self.connection.cursor()
         cur.row_factory = sqlite3.Row
@@ -234,7 +234,7 @@ class CardvaultDB:
     def lib_get_all(self) -> list:
         """
         Load all cards in library from database in alphabetical order
-        :return: A list containing all cards in library as 'cv_engine.models.Card'
+        :return: A list containing all cards in library as 'cv_core.models.Card'
         """
         cur = self.connection.cursor()
         cur.row_factory = sqlite3.Row

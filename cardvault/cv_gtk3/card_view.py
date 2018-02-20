@@ -3,7 +3,7 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 
 from cv_gtk3.gtk_util import GTKUtilities
-from cv_engine.util import MTGConstants
+from cv_core.util import MTGConstants
 
 
 class CardView(Gtk.ScrolledWindow):

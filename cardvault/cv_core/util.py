@@ -1,18 +1,17 @@
 import json
 import os
 
-from cv_engine.models import Card
+from cv_core.models import Card
 
 
-class EngineConfig:
-    """
-    Configuration class for the Cardvault engine
+class CoreConfig:
+    """ Configuration class for the Cardvault engine
     Defines default values for all settings
     Should be changed at runtime to load customized settings
     """
-    # Should cv_engine show duplicate names in searches
+    # Should cv_core show duplicate names in searches
     duplicate_names_in_search = True
-    # Log level for cv_engine
+    # Log level for cv_core
     log_level = 0
     # Name of the database file
     db_file = 'cardvault.db'
@@ -22,9 +21,8 @@ class EngineConfig:
     icon_cache_path = os.path.join(os.path.expanduser('~'), '.cache', 'cardvault', 'icons')
 
 
-class EngineConstants:
-    """
-    Constants of cv_engine
+class CoreConstants:
+    """ Constants of cv_core
     Contains version number, application infos, etc.
     """
     # Version of the cardvault engine
@@ -36,8 +34,7 @@ class EngineConstants:
 
 
 class MTGConstants:
-    """
-    This class contains constants that can be used within the whole program
+    """ This class contains constants that can be used within the whole program
     Included are for example the the official color order or rarities
     """
     # Color order for mana symbols
@@ -58,10 +55,8 @@ class MTGConstants:
     }
 
 
-class Utilities:
-    """
-    The class offers methods for general usage thorough the program.
-    """
+class CoreUtilities:
+    """ The class offers methods for general usage thorough the program. """
     @staticmethod
     def apply_config(filename):
         """
@@ -71,12 +66,11 @@ class Utilities:
         with open(filename) as config_file:
             config = json.load(config_file)
             for setting, value in config.items():
-                EngineConfig.__dict__[setting] = value
+                CoreConfig.__dict__[setting] = value
 
     @staticmethod
     def parse_mtgjson_cards(json_data):
-        """
-        Parse a json object to
+        """ Parse a json object to
         :param json_data:
         """
         output = []

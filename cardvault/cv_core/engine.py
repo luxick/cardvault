@@ -1,24 +1,24 @@
 import os
 import itertools
 
-from cv_engine.database import CardvaultDB
-from cv_engine.util import EngineConfig, EngineConstants, Utilities
+from cv_core.database import CardvaultDB
+from cv_core.util import CoreConfig, CoreConstants, CoreUtilities
 
 
 class CardvaultEngine:
     def __init__(self, config_file=False):
-        """ Create a new cv_engine instance
+        """ Create a new cv_core instance
         :param config_file: File path of the configuration file
         """
         if config_file:
-            Utilities.apply_config(config_file)
-        db_file_path = os.path.join(EngineConstants.config_path, EngineConfig.db_file)
+            CoreUtilities.apply_config(config_file)
+        db_file_path = os.path.join(CoreConstants.config_path, CoreConfig.db_file)
         self.database = CardvaultDB(db_file_path)
 
     def get_card(self, card_id):
         """ Load a card object from database
         :param card_id: multiverse id of a card
-        :return: an cv_engine.model.Card object
+        :return: an cv_core.model.Card object
         """
         return self.database.card_load(card_id)
 
@@ -30,7 +30,7 @@ class CardvaultEngine:
 
     def get_all_categories(self) -> dict:
         """ Get all categories an the cards that are contained within them
-        :return: A dict with the category names and cv_engine.models.Card objects as values
+        :return: A dict with the category names and cv_core.models.Card objects as values
         """
         categories = self.database.category_get_all()
         all_ids = set(itertools.chain.from_iterable(categories.values()))
